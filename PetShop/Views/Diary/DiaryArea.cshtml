@@ -1,0 +1,91 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var entries = ViewBag.UserDiaries as List<PetShop.Models.DiaryEntry>;
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    #MyCanvas {
+        flex: 1; /* 和左邊同寬，或你可用固定寬度 */
+        max-width: 600px;
+        height: 100%;
+        background: #fffef8;
+        border-radius: 8px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    .page-wrapper {
+        display: flex;
+        gap: 20px; /* 左右間距 */
+        align-items: flex-start; /* 頂端對齊 */
+        padding: 20px;
+        box-sizing: border-box;
+        height: 80vh; /* 視需要調整高度 */
+    }
+    .container {
+        flex: 1; /* 撐滿剩餘空間 */
+        max-width: 600px; /* 限制最大寬度，避免太寬 */
+        overflow-y: auto; /* 內容超長可滾動 */
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+</style>
+<div class="page-wrapper">
+    <div class="container mt-5">
+        <h2 class="mb-4">📔 飲食日記</h2>
+
+        <!-- 成功/失敗訊息 -->
+        @if (TempData["Msg"] != null)
+        {
+            <div class="alert alert-info">@TempData["Msg"]</div>
+        }
+
+        <!-- 日記輸入表單 -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <form method="post" action="/Home/DiaryArea">
+                    <div class="form-group">
+                        <label for="diaryContent">請輸入今日的飲食紀錄：</label>
+                        <br />
+                        <textarea class="form-control" id="diaryContent" name="A" rows="3" placeholder="例如：早餐吃了雞蛋和燕麥…"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 歷史日記顯示 -->
+        <h4 class="mb-3">🕒 我的日記紀錄：</h4>
+
+        @if (entries != null && entries.Count > 0)
+        {
+            <ul class="list-group">
+                @foreach (var entry in entries)
+                {
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">@entry.CreateTime.ToString("yyyy-MM-dd HH:mm")</span>
+                            <span class="badge badge-secondary">日記</span>
+                        </div>
+                        <div class="mt-2">@entry.Content</div>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <div class="alert alert-secondary">尚無日記紀錄。</div>
+        }
+    </div>
+    <canvas id="MyCanvas"></canvas>
+</div>
+<script>
+    var MyData = {
+        type: "bar",
+        data: {
+            datasets: [{ label: "含量", },]
+        },
+    };
+    var MyChart = new Chart(MyCanvas, MyData);
+</script>

@@ -1,0 +1,63 @@
+﻿
+@Scripts.Render("~/bundles/jquery")
+
+<h3>請選擇你今天的餐點：</h3>
+<h5>
+    <span id="Qtext"></span><br />
+    <img id="Qimg" /><br />
+    <span id="optionsArea"></span>
+    <span id="result"></span>
+</h5>
+
+<br />
+<button id="start">取得餐點選單</button>
+<button id="submit" style="display:none">確認送出</button>
+
+<script>
+    let selectedOption = "";
+    let problemNo = 0;
+
+    $(document).ready(function () {
+        $("#start").click(function () {
+            problemNo++;
+            $.ajax({
+                type: 'POST',
+                dataType: "json",
+                data: JSON.stringify({ count: problemNo }),
+                contentType: 'application/json; charset=utf-8',
+                url: '@Url.Action("Check", "Home")',
+                success: function (data) {
+                    $("#Qtext").text(data.Problem);
+
+                    let imgPath = "/Images/meal.png";
+                    $("#Qimg").attr("src", imgPath);
+                    $("#Qimg").attr("style", "width:150px;height:150px");
+
+                    // 顯示單選選項
+                    let html = "";
+                    for (let i = 0; i < data.Options.length; i++) {
+                        html += `<label><input type="radio" name="mealChoice" value="${data.Options[i]}" /> ${data.Options[i]}</label><br/>`;
+                    }
+                    $("#optionsArea").html(html);
+
+                    $("#submit").show();
+                },
+                error: function () {
+                    alert("取得資料失敗！");
+                }
+            });
+        });
+
+        $("#submit").click(function () {
+            selectedOption = $("input[name='mealChoice']:checked").val();
+            if (!selectedOption) {
+                $("#result").text("請先選擇一個餐點！");
+                return;
+            }
+            $("#result").text("你選擇的餐點是：" + selectedOption);
+            $("#submit").hide();
+        });
+    });
+</script>
+
+

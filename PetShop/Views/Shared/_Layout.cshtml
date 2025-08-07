@@ -1,0 +1,70 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - efood</title>
+    <style>
+        .S{
+            color:red;
+        }
+        .P{
+            color:lightgray;
+        }
+        #A{
+            color:gray;
+        }
+        .N{
+            border:none;
+            background-color:white;
+            font-size:small;
+            text-decoration:underline;
+        }
+        header {
+            font-size: 2.5rem;
+            color: #2c5690;
+            padding: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        main {
+            height: calc(100vh - 100px);
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: linear-gradient(to right, #f9f9f9, #e9eff5);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <header>E-食代</header>
+    <div style="display: flex; justify-content: flex-end; gap: 20px;">
+
+        @if (ViewBag.Account == null)
+        {
+            @Html.ActionLink("登入/註冊", "LeaveHome", new { @style = "font-size:16px;color:blue" })
+        }
+        else
+        {
+            @ViewBag.Account<span>登入</span>
+            @Html.ActionLink("登出", "Logout")
+        }
+        @Html.ActionLink("回首頁", "Index", new { @style = "font-size:16px;color:blue;" })
+    </div>
+    <main>
+        @RenderBody()
+    </main>
+    <h6>版權所有，抄襲必究</h6>
+</body>
+</html>
