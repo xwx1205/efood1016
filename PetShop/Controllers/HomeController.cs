@@ -15,8 +15,8 @@ namespace PetShop.Controllers
 {
     public class HomeController : Controller
     {
-        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\佳芸\Desktop\web\PetShop\PetShop\App_Data\Pet.mdf;Integrated Security=True");
-
+        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\佳芸\Desktop\web\efood\PetShop\App_Data\Pet.mdf;Integrated Security=True");
+        
         public ActionResult LeaveHome()
         {
             TempData["Choice"] = "One";
@@ -307,7 +307,7 @@ namespace PetShop.Controllers
             }
 
             // 建議使用加密存密碼
-            user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.Password = newPassword;
             user.ResetToken = null;
             user.ResetTokenExpire = null;
             db.SaveChanges();
