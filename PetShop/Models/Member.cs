@@ -1,18 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+using System.ComponentModel.DataAnnotations;
 
 namespace PetShop.Models
 {
     public class Member
     {
-        public string Realname;
-        public int Birthyear;
-        public Member(string realname,int birthyear)
-        {
-            this.Realname = realname;
-            this.Birthyear = birthyear;
-        }
+        [Key]
+        [Required]
+        public string Account { get; set; }
+        public string Password { get; set; }
+        public string RealName { get; set; }
+        public string Phone { get; set; }
+        public int Birthyear { get; set; }
+        public string ResetToken { get; set; }
+        public DateTime? ResetTokenExpire { get; set; }
     }
 }

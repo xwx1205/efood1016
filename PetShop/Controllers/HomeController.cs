@@ -1,28 +1,23 @@
-﻿using System;
+﻿using PetShop.Models;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
 using System.Data.SqlClient;
-using System.Web.Configuration;
 using System.Diagnostics;
-using System.Web.UI.WebControls;
-using System.Security.Policy;
-using PetShop.Models;
-using System.Web.Helpers;
+using System.Linq;
+using System.Web.Mvc;
 
 namespace PetShop.Controllers
 {
     public class HomeController : Controller
     {
         public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\佳芸\Desktop\web\efood\PetShop\App_Data\Pet.mdf;Integrated Security=True");
-        
+        public MyDbContext db = new MyDbContext();
         public ActionResult LeaveHome()
         {
             TempData["Choice"] = "One";
             return RedirectToAction("LoginRegister");
         }
-        public string AddUser(string user, string pwd,string realname,string phone)
+        public string AddUser(string user, string pwd, string realname, string phone)
         {
             string Response;
             try
@@ -31,10 +26,10 @@ namespace PetShop.Controllers
                 string G = "Insert[Member](Account,Password,RealName,Phone)Values(@Account,@Password,@RealName,@Phone)";
                 Debug.WriteLine(G);
                 SqlCommand Q = new SqlCommand(G, X);
-                Q.Parameters.AddWithValue("@Account",user);
-                Q.Parameters.AddWithValue("@Password",pwd);
-                Q.Parameters.AddWithValue("@RealName",realname);
-                Q.Parameters.AddWithValue("@Phone",phone);
+                Q.Parameters.AddWithValue("@Account", user);
+                Q.Parameters.AddWithValue("@Password", pwd);
+                Q.Parameters.AddWithValue("@RealName", realname);
+                Q.Parameters.AddWithValue("@Phone", phone);
                 Q.ExecuteNonQuery();
                 Response = "註冊成功";
             }
@@ -52,11 +47,10 @@ namespace PetShop.Controllers
             {
                 X.Open();
                 string G = "Select * from [Member] where Account= @User";
-                Debug.WriteLine("SQL="+G);
-                SqlCommand Q=new SqlCommand(G,X);
-                Q.Parameters.AddWithValue("@User",user);
-                Q.ExecuteNonQuery();
-                SqlDataReader R=Q.ExecuteReader();
+                Debug.WriteLine("SQL=" + G);
+                SqlCommand Q = new SqlCommand(G, X);
+                Q.Parameters.AddWithValue("@User", user);
+                SqlDataReader R = Q.ExecuteReader();
                 if (R.Read() == true)
                 {
                     Result = R["Password"].ToString().Trim();
@@ -79,7 +73,7 @@ namespace PetShop.Controllers
             string Pwd = Request["RegisterPassword"];
             string Realname = Request["RegisterRealname"];
             string Phone = Request["RegisterPhone"];
-            User=User.Trim();
+            User = User.Trim();
             Pwd = Pwd.Trim();
             Realname = Realname.Trim();
             Phone = Phone.Trim();
@@ -87,7 +81,7 @@ namespace PetShop.Controllers
             string Ans;
             if (Result == "非會員")
             {
-                Ans =AddUser(User,Pwd,Realname,Phone);
+                Ans = AddUser(User, Pwd, Realname, Phone);
             }
             else
             {
@@ -96,13 +90,13 @@ namespace PetShop.Controllers
             TempData["Note"] = Ans;
             return RedirectToAction("LoginRegister");
         }
-        public ActionResult CheckIn() 
+        public ActionResult CheckIn()
         {
             string User = Request["UserName"];
             string Pwd = Request["Password"];
             string Ans;
             string CorrectPwd = FindUser(User.Trim());
-            if (CorrectPwd=="非會員")
+            if (CorrectPwd == "非會員")
             {
                 Ans = "查無此人";
             }
@@ -114,19 +108,19 @@ namespace PetShop.Controllers
                 }
                 else
                 {
-                    
+
                     ViewBag.Account = User;
                     Session["LoginUser"] = User;
                     return View("~/Views/Home/Index.cshtml");
                 }
             }
             TempData["Note"] = Ans;
-            TempData["Choice"]="One";
+            TempData["Choice"] = "One";
             return View("~/Views/Home/LoginRegister.cshtml");
         }
-        public ActionResult LoginRegister() 
+        public ActionResult LoginRegister()
         {
-            return View(); 
+            return View();
         }
         public ActionResult Logout()
         {
@@ -255,9 +249,16 @@ namespace PetShop.Controllers
         }
 
         [HttpPost]
-        public ActionResult SendResetLink(string email)
+        public ActionResult SendResetLink(string account)
         {
-            var user = db.Users.FirstOrDefault(u => u.Email == email);
+            //var allAccounts = db.member.Select(m => m.Account).ToList();
+            //Debug.WriteLine("目前所有帳號：");
+            //foreach (var acc in allAccounts)
+            //{
+            //    Debug.WriteLine(acc);
+            //}
+
+            var user = db.member.FirstOrDefault(u => u.Account.Trim() == account);
             if (user == null)
             {
                 TempData["Note"] = "查無此帳號";
@@ -278,7 +279,7 @@ namespace PetShop.Controllers
         // 重設密碼頁面
         public ActionResult ResetPassword(string token)
         {
-            var user = db.Users.FirstOrDefault(u => u.ResetToken == token && u.ResetTokenExpire > DateTime.Now);
+            var user = db.member.FirstOrDefault(u => u.ResetToken == token && u.ResetTokenExpire > DateTime.Now);
             if (user == null)
             {
                 TempData["Note"] = "連結無效或已過期";
@@ -299,7 +300,7 @@ namespace PetShop.Controllers
                 return RedirectToAction("ResetPassword", new { token });
             }
 
-            var user = db.Users.FirstOrDefault(u => u.ResetToken == token && u.ResetTokenExpire > DateTime.Now);
+            var user = db.member.FirstOrDefault(u => u.ResetToken == token && u.ResetTokenExpire > DateTime.Now);
             if (user == null)
             {
                 TempData["Note"] = "連結無效或已過期";
