@@ -6,7 +6,7 @@ namespace PetShop.Models
     {
         [Required(ErrorMessage = "帳號不能留白")]
         [RegularExpression(@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$", ErrorMessage = "請輸入電子信箱")]
-        [Display(Name = "帳號:")]
+        [Display(Name = "信箱:")]
         public string RegisterAccount { get; set; }
         [MinLength(3, ErrorMessage = "長度不能小於3")]
         [MaxLength(8, ErrorMessage = "長度不能大於8")]

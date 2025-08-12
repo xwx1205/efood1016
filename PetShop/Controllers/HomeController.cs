@@ -94,6 +94,14 @@ namespace PetShop.Controllers
         {
             string User = Request["Account"];
             string Pwd = Request["Password"];
+
+            if (string.IsNullOrEmpty(User) || string.IsNullOrEmpty(Pwd))
+            {
+                TempData["Note"] = "請輸入帳號與密碼";
+                TempData["Choice"] = "One";
+                return View("~/Views/Home/LoginRegister.cshtml");
+            }
+
             string Ans;
             string CorrectPwd = FindUser(User.Trim());
             if (CorrectPwd == "非會員")
@@ -248,17 +256,54 @@ namespace PetShop.Controllers
             return View();
         }
 
+        public Member FindMember(string account)
+        {
+            Member user = null;
+            string Response;
+            try
+            {
+                X.Open();
+                string sql = "SELECT * FROM [Member] WHERE Account = @Account";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Account", account);
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    user = new Member()
+                    {
+                        Account = reader["Account"].ToString(),
+                        Password = reader["Password"].ToString(),
+                        RealName = reader["RealName"].ToString(),
+                        Phone = reader["Phone"].ToString(),
+                        Birthyear = Convert.ToInt32(reader["Birthyear"]),
+                        ResetToken = reader["ResetToken"] == DBNull.Value ? null : reader["ResetToken"].ToString(),
+                        ResetTokenExpire = reader["ResetTokenExpire"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["ResetTokenExpire"])
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Response = ex.Message;
+            }
+            finally
+            {
+                X.Close();
+            }
+            return user;
+        }
+
         [HttpPost]
         public ActionResult SendResetLink(string account)
         {
-            //var allAccounts = db.Member.Select(m => m.Account).ToList();
-            //Debug.WriteLine("目前所有帳號：");
-            //foreach (var acc in allAccounts)
-            //{
-            //    Debug.WriteLine(acc);
-            //}
-            account = account?.Trim().ToLower();
-            var user = db.Member.FirstOrDefault(u => u.Account.ToLower() == account);
+            if (string.IsNullOrEmpty(account))
+            {
+                TempData["Note"] = "請輸入帳號";
+                return RedirectToAction("ForgotPassword");
+            }
+
+            account = account.Trim().ToLower();
+
+            var user = FindMember(account);
             if (user == null)
             {
                 TempData["Note"] = "查無此帳號";
@@ -266,55 +311,115 @@ namespace PetShop.Controllers
             }
 
             var token = Guid.NewGuid().ToString();
-            user.ResetToken = token;
-            user.ResetTokenExpire = DateTime.Now.AddMinutes(30);
-            db.SaveChanges();
+            var expire = DateTime.Now.AddMinutes(30);
+
+            // 更新資料庫的 ResetToken 與 ResetTokenExpire 欄位
+            try
+            {
+                X.Open();
+                string sql = "UPDATE [Member] SET ResetToken = @Token, ResetTokenExpire = @Expire WHERE Account = @Account";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Token", token);
+                cmd.Parameters.AddWithValue("@Expire", expire);
+                cmd.Parameters.AddWithValue("@Account", account);
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                TempData["Note"] = "更新資料庫失敗：" + ex.Message;
+                return RedirectToAction("ForgotPassword");
+            }
+            finally
+            {
+                X.Close();
+            }
 
             var resetLink = Url.Action("ResetPassword", "Home", new { token = token }, Request.Url.Scheme);
-            // 這裡應該用 Email 寄出 resetLink，先用 TempData 模擬
-            TempData["Note"] = $"重設密碼連結：{resetLink}";
-            return RedirectToAction("CheckIn");
+
+            // 實際環境應用 Email 寄送，這裡先用 TempData 模擬
+            return RedirectToAction("ResetPassword", new { token = token });
         }
 
-        // 重設密碼頁面
         public ActionResult ResetPassword(string token)
         {
-            var user = db.Member.FirstOrDefault(u => u.ResetToken == token && u.ResetTokenExpire > DateTime.Now);
-            if (user == null)
+            Debug.WriteLine("收到的 token: " + token);
+            if (string.IsNullOrEmpty(token))
             {
-                TempData["Note"] = "連結無效或已過期";
-                return RedirectToAction("CheckIn");
+                TempData["Note"] = "重設密碼連結無效";
+                return RedirectToAction("LoginRegister");
+            }
+
+            // 驗證 token 是否存在且未過期
+            try
+            {
+                X.Open();
+                string sql = "SELECT COUNT(*) FROM [Member] WHERE ResetToken = @Token AND ResetTokenExpire > GETDATE()";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Token", token);
+                int count = (int)cmd.ExecuteScalar();
+
+                if (count == 0)
+                {
+                    TempData["Note"] = "重設密碼連結無效或已過期";
+                    return RedirectToAction("LoginRegister");
+                }
+            }
+            finally
+            {
+                X.Close();
             }
 
             ViewBag.Token = token;
             return View();
         }
 
-        // 處理密碼更新
         [HttpPost]
         public ActionResult ResetPassword(string token, string newPassword, string confirmPassword)
         {
+            if (string.IsNullOrEmpty(token))
+            {
+                TempData["Note"] = "重設密碼連結無效";
+                return RedirectToAction("LoginRegister");
+            }
+
+            if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmPassword))
+            {
+                TempData["Note"] = "請輸入完整密碼";
+                ViewBag.Token = token;
+                return View();
+            }
+
             if (newPassword != confirmPassword)
             {
-                TempData["Note"] = "兩次密碼輸入不一致";
-                return RedirectToAction("ResetPassword", new { token });
+                TempData["Note"] = "兩次輸入的密碼不一致";
+                ViewBag.Token = token;
+                return View();
             }
 
-            var user = db.Member.FirstOrDefault(u => u.ResetToken == token && u.ResetTokenExpire > DateTime.Now);
-            if (user == null)
+            // 更新密碼
+            try
             {
-                TempData["Note"] = "連結無效或已過期";
-                return RedirectToAction("CheckIn");
+                X.Open();
+                string sql = "UPDATE [Member] SET Password = @Password, ResetToken = NULL, ResetTokenExpire = NULL WHERE ResetToken = @Token AND ResetTokenExpire > GETDATE()";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Password", newPassword);
+                cmd.Parameters.AddWithValue("@Token", token);
+                int rows = cmd.ExecuteNonQuery();
+
+                if (rows == 0)
+                {
+                    TempData["Note"] = "重設密碼連結無效或已過期";
+                    return RedirectToAction("LoginRegister");
+                }
+            }
+            finally
+            {
+                X.Close();
             }
 
-            // 建議使用加密存密碼
-            user.Password = newPassword;
-            user.ResetToken = null;
-            user.ResetTokenExpire = null;
-            db.SaveChanges();
-
-            TempData["Note"] = "密碼已重設成功，請重新登入";
-            return RedirectToAction("CheckIn");
+            TempData["Note"] = "密碼已成功重設，請重新登入";
+            return RedirectToAction("LoginRegister");
         }
+
     }
 }
