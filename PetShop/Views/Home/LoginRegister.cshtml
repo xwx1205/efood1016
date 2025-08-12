@@ -42,6 +42,14 @@
             $(".alert-danger").hide();
         });
     });
+    function togglePwd() {
+        const pwdInput = document.getElementById('regPwd');
+        if (pwdInput.type === 'password') {
+            pwdInput.type = 'text';
+        } else {
+            pwdInput.type = 'password';
+        }
+    }
 </script>
 
 <style>
@@ -146,7 +154,7 @@
             }
             @using (Html.BeginForm("CheckIn", "Home"))
             {
-                @Html.TextBox("UserName", null, new { placeholder = "信箱", @class = "form-control" })
+                @Html.TextBox("Account", null, new { placeholder = "信箱", @class = "form-control" })
                 @Html.Password("Password", null, new { placeholder = "密碼", @class = "form-control" })
                 <input type="submit" value="登入" class="btn btn-primary" />
                 <button class="btn-link" onclick="GoTwo(); return false;">還沒註冊?</button>
@@ -169,7 +177,12 @@
                 <br />
 
                 @Html.LabelFor(m => m.RegisterPassword)
-                @Html.PasswordFor(m => m.RegisterPassword, new { @class = "P" })
+                <div style="position: relative;">
+                    @Html.PasswordFor(m => m.RegisterPassword, new { @class = "P", id = "regPwd" })
+                    <button type="button" onclick="togglePwd()" style="position: absolute; right: 10px; top: 5px;">
+                        👁
+                    </button>
+                </div>
                 @Html.ValidationMessageFor(m => m.RegisterPassword, null, new { @Class = "S" })
                 <br />
 

@@ -47,7 +47,7 @@ namespace PetShop.Controllers
             {
                 X.Open();
                 string G = "Select * from [Member] where Account= @User";
-                Debug.WriteLine("SQL=" + G);
+                //Debug.WriteLine("SQL=" + G);
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@User", user);
                 SqlDataReader R = Q.ExecuteReader();
@@ -92,7 +92,7 @@ namespace PetShop.Controllers
         }
         public ActionResult CheckIn()
         {
-            string User = Request["UserName"];
+            string User = Request["Account"];
             string Pwd = Request["Password"];
             string Ans;
             string CorrectPwd = FindUser(User.Trim());
@@ -251,14 +251,14 @@ namespace PetShop.Controllers
         [HttpPost]
         public ActionResult SendResetLink(string account)
         {
-            //var allAccounts = db.member.Select(m => m.Account).ToList();
+            //var allAccounts = db.Member.Select(m => m.Account).ToList();
             //Debug.WriteLine("目前所有帳號：");
             //foreach (var acc in allAccounts)
             //{
             //    Debug.WriteLine(acc);
             //}
-
-            var user = db.member.FirstOrDefault(u => u.Account.Trim() == account);
+            account = account?.Trim().ToLower();
+            var user = db.Member.FirstOrDefault(u => u.Account.ToLower() == account);
             if (user == null)
             {
                 TempData["Note"] = "查無此帳號";
@@ -279,7 +279,7 @@ namespace PetShop.Controllers
         // 重設密碼頁面
         public ActionResult ResetPassword(string token)
         {
-            var user = db.member.FirstOrDefault(u => u.ResetToken == token && u.ResetTokenExpire > DateTime.Now);
+            var user = db.Member.FirstOrDefault(u => u.ResetToken == token && u.ResetTokenExpire > DateTime.Now);
             if (user == null)
             {
                 TempData["Note"] = "連結無效或已過期";
@@ -300,7 +300,7 @@ namespace PetShop.Controllers
                 return RedirectToAction("ResetPassword", new { token });
             }
 
-            var user = db.member.FirstOrDefault(u => u.ResetToken == token && u.ResetTokenExpire > DateTime.Now);
+            var user = db.Member.FirstOrDefault(u => u.ResetToken == token && u.ResetTokenExpire > DateTime.Now);
             if (user == null)
             {
                 TempData["Note"] = "連結無效或已過期";
