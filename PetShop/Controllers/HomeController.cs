@@ -23,7 +23,7 @@ namespace PetShop.Controllers
             try
             {
                 X.Open();
-                string G = "Insert[Member](Account,Password,RealName,Phone)Values(@Account,@Password,@RealName,@Phone)";
+                string G = "Insert INTO [Member] (Account, [Password], RealName, Phone) Values (@Account, @Password, @RealName, @Phone)";
                 Debug.WriteLine(G);
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", user);
@@ -33,9 +33,9 @@ namespace PetShop.Controllers
                 Q.ExecuteNonQuery();
                 Response = "註冊成功";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Response = "開檔失敗";
+                Response = "註冊失敗"+ ex.Message;
             }
             finally { X.Close(); }
             return Response;
