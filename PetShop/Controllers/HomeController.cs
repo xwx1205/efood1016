@@ -172,17 +172,38 @@ namespace PetShop.Controllers
             return RedirectToAction("DiaryIndex");
         }
 
-        public ActionResult DiaryIndex()
+        public ActionResult DiaryIndex(string date)
         {
             string account = Session["LoginUser"]?.ToString();
-
             List<DiaryEntry> userDiaries = new List<DiaryEntry>();
+
             try
             {
                 X.Open();
-                string G = "SELECT Content, CreateTime, Food, Calories FROM Diary WHERE Account = @Account ORDER BY CreateTime DESC";
+                string G = "SELECT Content, CreateTime, Food, Calories FROM Diary WHERE Account = @Account";
+
+                if (!string.IsNullOrEmpty(date))
+                {
+                    G += " AND CONVERT(date, CreateTime) = @SelectedDate";
+                }
+
+                G += " ORDER BY CreateTime DESC";
+
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", account);
+
+                if (!string.IsNullOrEmpty(date))
+                {
+                    DateTime selectedDate;
+                    if (DateTime.TryParse(date, out selectedDate))
+                    {
+                        Q.Parameters.AddWithValue("@SelectedDate", selectedDate.Date);
+                    }
+                    else
+                    {
+                        // 日期轉換失敗也可忽略，視情況記錄錯誤
+                    }
+                }
 
                 SqlDataReader reader = Q.ExecuteReader();
                 while (reader.Read())
@@ -209,6 +230,7 @@ namespace PetShop.Controllers
             }
             ViewBag.Account = account;
             ViewBag.UserDiaries = userDiaries;
+            ViewBag.SelectedDate = date;
             return View("~/Views/Diary/DiaryArea.cshtml");
         }
         [HttpPost]

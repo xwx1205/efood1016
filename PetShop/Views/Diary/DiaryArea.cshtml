@@ -1,6 +1,7 @@
 ﻿@{
     Layout = "~/Views/Shared/_Layout.cshtml";
     var entries = ViewBag.UserDiaries as List<PetShop.Models.DiaryEntry>;
+    var selectedDate = ViewBag.SelectedDate as string;
 }
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -67,13 +68,28 @@
                     </select>
                     <input type="hidden" id="foodName" name="FoodName" />
                     <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
-                    @*<p id="result"></p>*@
                 </form>
             </div>
         </div>
-
+        <br />
         <!-- 歷史日記顯示 -->
-        <h4 class="mb-3">🕒 我的日記紀錄：</h4>
+        <form method="get" action="/Home/DiaryIndex" class="mb-3">
+            <label for="searchDate">🔍 選擇日期查看紀錄：</label>
+            <input type="date" id="searchDate" name="date" class="form-control"
+                   value="@Request.QueryString["date"]" onchange="this.form.submit()" />
+        </form>
+
+        <h4 class="mb-3">
+            🕒
+            @if (!string.IsNullOrEmpty(selectedDate))
+            {
+                <text>@selectedDate 的日記紀錄：</text>
+            }
+            else
+            {
+                <text>所有日記紀錄：</text>
+            }
+        </h4>
 
         @if (entries != null && entries.Count > 0)
         {
@@ -134,8 +150,6 @@
         let result = document.getElementById("result");
 
         if (value) {
-            /*result.innerText = `${text} 的熱量是 ${value} kcal`;*/
-
             // 更新圖表
             MyChart.data.labels = [text];
             MyChart.data.datasets[0].data = [value];
