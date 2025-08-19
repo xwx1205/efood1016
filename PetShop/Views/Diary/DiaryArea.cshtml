@@ -50,7 +50,24 @@
                         <br />
                         <textarea class="form-control" id="diaryContent" name="A" rows="3" placeholder="例如：早餐吃了雞蛋和燕麥…"></textarea>
                     </div>
+                    <select id="foodSelect" name="FoodCalories" onchange="showCalories()">
+                        <option value="">-- 請選擇食物 --</option>
+
+                        <optgroup label="水果">
+                            <option value="89">香蕉 (100g)</option>
+                            <option value="52">蘋果 (100g)</option>
+                            <option value="30">西瓜 (100g)</option>
+                        </optgroup>
+
+                        <optgroup label="肉類">
+                            <option value="165">雞胸肉 (100g)</option>
+                            <option value="250">牛排 (100g)</option>
+                            <option value="143">雞蛋 (100g)</option>
+                        </optgroup>
+                    </select>
+                    <input type="hidden" id="foodName" name="FoodName" />
                     <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
+                    @*<p id="result"></p>*@
                 </form>
             </div>
         </div>
@@ -68,7 +85,17 @@
                             <span class="text-muted">@entry.CreateTime.ToString("yyyy-MM-dd HH:mm")</span>
                             <span class="badge badge-secondary">日記</span>
                         </div>
-                        <div class="mt-2">@entry.Content</div>
+                        <div class="mt-2">
+                            @if (!string.IsNullOrWhiteSpace(entry.Content))
+                            {
+                                <div><strong>內容：</strong>@entry.Content</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(entry.Food))
+                            {
+                                <div><strong>食物：</strong>@entry.Food</div>
+                                <div><strong>熱量：</strong>@entry.Calories kcal</div>
+                            }
+                        </div>
                     </li>
                 }
             </ul>
@@ -81,11 +108,45 @@
     <canvas id="MyCanvas"></canvas>
 </div>
 <script>
+    var ctx = document.getElementById("MyCanvas").getContext("2d");
     var MyData = {
         type: "bar",
         data: {
-            datasets: [{ label: "含量", },]
+            labels: [], // 食物名稱
+            datasets: [{
+                label: "熱量 (kcal)",
+                data: [], // 對應的熱量
+                backgroundColor: ["rgba(75,192,192,0.6)"]
+            }]
         },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
     };
-    var MyChart = new Chart(MyCanvas, MyData);
+    var MyChart = new Chart(ctx, MyData);
+
+    function showCalories() {
+        let select = document.getElementById("foodSelect");
+        let value = select.value;
+        let text = select.options[select.selectedIndex].text;
+        let result = document.getElementById("result");
+
+        if (value) {
+            /*result.innerText = `${text} 的熱量是 ${value} kcal`;*/
+
+            // 更新圖表
+            MyChart.data.labels = [text];
+            MyChart.data.datasets[0].data = [value];
+            MyChart.update();
+
+            // 把食物名稱存進隱藏欄位
+            document.getElementById("foodName").value = text;
+        } else {
+            result.innerText = "";
+            document.getElementById("foodName").value = "";
+        }
+    }
+
 </script>

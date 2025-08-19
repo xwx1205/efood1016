@@ -35,7 +35,7 @@ namespace PetShop.Controllers
             }
             catch (Exception ex)
             {
-                Response = "註冊失敗"+ ex.Message;
+                Response = "註冊失敗" + ex.Message;
             }
             finally { X.Close(); }
             return Response;
@@ -139,16 +139,23 @@ namespace PetShop.Controllers
         public ActionResult DiaryArea()
         {
             string Content = Request["A"]?.ToString();
+            string FoodName = Request["foodName"]?.ToString();
+            string FoodCaloriesStr = Request["FoodCalories"]?.ToString();
+            int FoodCalories = 0;
+            int.TryParse(FoodCaloriesStr, out FoodCalories);
+
             string Response;
             try
             {
                 string account = Session["LoginUser"]?.ToString();
 
                 X.Open();
-                string G = "INSERT INTO Diary (Account, Content) VALUES (@Account, @Content)";
+                string G = "INSERT INTO Diary (Account, Content, Food, Calories) VALUES (@Account, @Content, @Food, @Calories)";
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", account);
                 Q.Parameters.AddWithValue("@Content", Content);
+                Q.Parameters.AddWithValue("@Food", FoodName);
+                Q.Parameters.AddWithValue("@Calories", FoodCalories);
                 Q.ExecuteNonQuery();
                 Response = "建立成功";
             }
@@ -173,18 +180,26 @@ namespace PetShop.Controllers
             try
             {
                 X.Open();
-                string G = "SELECT Content, CreateTime FROM Diary WHERE Account = @Account ORDER BY CreateTime DESC";
+                string G = "SELECT Content, CreateTime, Food, Calories FROM Diary WHERE Account = @Account ORDER BY CreateTime DESC";
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", account);
 
                 SqlDataReader reader = Q.ExecuteReader();
                 while (reader.Read())
                 {
+                    string content = reader["Content"] as string ?? "";
+                    DateTime createTime = reader["CreateTime"] != DBNull.Value ? Convert.ToDateTime(reader["CreateTime"]) : DateTime.MinValue;
+                    string food = reader["Food"] as string ?? "";
+                    int calories = reader["Calories"] != DBNull.Value ? Convert.ToInt32(reader["Calories"]) : 0;
+
                     userDiaries.Add(new DiaryEntry
                     {
-                        Content = reader["Content"].ToString(),
-                        CreateTime = Convert.ToDateTime(reader["CreateTime"])
+                        Content = content,
+                        CreateTime = createTime,
+                        Food = food,
+                        Calories = calories
                     });
+
                 }
                 reader.Close();
             }

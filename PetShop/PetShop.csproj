@@ -133,6 +133,7 @@
     </Compile>
     <Compile Include="Models\DbContext.cs" />
     <Compile Include="Models\DiaryEntry.cs" />
+    <Compile Include="Models\Food.cs" />
     <Compile Include="Models\Member.cs" />
     <Compile Include="Models\RegisterUser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
