@@ -1,0 +1,57 @@
+﻿<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    #MyCanvas {
+        background-color: lightblue;
+    }
+
+    #MyArea {
+        width: 400px;
+        height: 500px;
+        background-color: lightgray;
+    }
+</style>
+
+<div id="MyArea">
+    <h3>每日餐點熱量分析<button onclick="Invoice()">分析</button></h3>
+    <div id="X"></div>
+    <canvas id="MyCanvas"></canvas>
+</div>
+<script>
+    function Invoice() {
+        $.ajax({
+            url: '/Home/Invoice',
+            success: function (Data) {
+                $("#X").text(Data.P);
+                MyData.data.labels = Data.Q.map(candidate => candidate.Name);
+                MyData.data.datasets[0].data = Data.Q.map(candidate => candidate.Votes);
+                MyChart.update();
+            },
+            error: function () {
+                $("#X").text("上傳失敗");
+            }
+        });
+
+    }
+    var MyData = {
+        type: "bar",
+        data: {
+            labels:[],
+            datasets:
+            [
+                {
+                    label: "熱量(卡)",
+                    data: [],
+                    borderWidth: 5,
+                    borderColor: [
+                        'yellow',
+
+                    ],
+                    backgroundColor:["red"],
+                },
+            ]
+        },
+    };
+var MyChart = new Chart(MyCanvas, MyData);
+</script>
+

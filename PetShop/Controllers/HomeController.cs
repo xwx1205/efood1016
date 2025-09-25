@@ -10,7 +10,7 @@ namespace PetShop.Controllers
 {
     public class HomeController : Controller
     {
-        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\佳芸\Desktop\web\efood\PetShop\App_Data\Pet.mdf;Integrated Security=True");
+        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\佳芸\Desktop\efood\efood\PetShop\App_Data\Pet.mdf;Integrated Security=True");
         public MyDbContext db = new MyDbContext();
         public ActionResult LeaveHome()
         {
@@ -236,13 +236,12 @@ namespace PetShop.Controllers
         [HttpPost]
         public JsonResult Check(int count)
         {
-            string Conn, G = "", Problem = "";
+            string G = "", Problem = "";
             List<string> Options = new List<string>();
 
             try
             {
                 X.Open();
-                Conn = "Success";
                 G = "SELECT * FROM [Meal] WHERE Id = @id";
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@id", count);
@@ -258,7 +257,6 @@ namespace PetShop.Controllers
             }
             catch (Exception ex)
             {
-                Conn = "Fail";
                 Problem = "錯誤：" + ex.Message;
             }
             finally
@@ -275,12 +273,198 @@ namespace PetShop.Controllers
             return Json(result, JsonRequestBehavior.AllowGet);
         }
 
-        public ActionResult MealIndex()
+        [HttpPost]
+        public JsonResult SaveMealChoice(string mealType, string selectedOption, string date)
+        {
+            string account = Session["LoginUser"]?.ToString();
+            if (string.IsNullOrEmpty(account))
+                return Json(new { success = false, message = "未登入" });
+
+            DateTime choiceDate = string.IsNullOrEmpty(date) ? DateTime.Today : DateTime.Parse(date);
+
+            try
+            {
+                X.Open();
+                // 同一天同餐別更新，不重複新增
+                string sql = @"IF EXISTS (SELECT 1 FROM MealChoice WHERE Account=@Account AND MealType=@MealType AND ChoiceDate=@ChoiceDate) UPDATE MealChoice SET Choice=@Choice WHERE Account=@Account AND MealType=@MealType AND ChoiceDate=@ChoiceDate ELSE INSERT INTO MealChoice(Account, MealType, Choice, ChoiceDate) VALUES(@Account, @MealType, @Choice, @ChoiceDate)";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Account", account);
+                cmd.Parameters.AddWithValue("@MealType", mealType);
+                cmd.Parameters.AddWithValue("@Choice", selectedOption);
+                cmd.Parameters.AddWithValue("@ChoiceDate", choiceDate.Date);
+                cmd.ExecuteNonQuery();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+            finally
+            {
+                X.Close();
+            }
+        }
+
+        public ActionResult MealHistory()
+        {
+            string account = Session["LoginUser"]?.ToString();
+            List<MealChoiceEntry> meals = new List<MealChoiceEntry>();
+
+            try
+            {
+                X.Open();
+                string sql = "SELECT MealType, Choice, CreateTime FROM MealChoice WHERE Account=@Account ORDER BY CreateTime";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Account", account);
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    meals.Add(new MealChoiceEntry
+                    {
+                        MealType = reader["MealType"].ToString(),
+                        Choice = reader["Choice"].ToString(),
+                        CreateTime = Convert.ToDateTime(reader["CreateTime"])
+                    });
+                }
+                reader.Close();
+            }
+            finally { X.Close(); }
+
+            ViewBag.Meals = meals;
+            return View("~/Views/Diary/MealArea.cshtml");
+        }
+
+        public JsonResult Invoice()
+        {
+            String P = "Vote Success";
+            var candidates = new List<object>();
+
+
+            try
+            {
+                X.Open();
+                string G = "select * from[Pictogram]";
+                SqlCommand Q = new SqlCommand(G, X);
+                Q.ExecuteNonQuery();
+                SqlDataReader R = Q.ExecuteReader();
+                while (R.Read() == true)
+                {
+                    string MyName = Convert.ToString(R["Candidate"]);
+                    int MyVotes = Convert.ToInt16(R["Count"]);
+                    candidates.Add(new
+                    {
+                        Name = MyName,
+                        Votes = MyVotes
+                    });
+                }
+            }
+            catch (Exception) { }
+            finally { X.Close(); }
+
+            return Json(new { P, Q = candidates }, JsonRequestBehavior.AllowGet);
+        }
+
+        public JsonResult GetAllMealRecords()
+        {
+            string account = Session["LoginUser"]?.ToString();
+            if (string.IsNullOrEmpty(account))
+            {
+                return Json(new { success = false, message = "未登入" }, JsonRequestBehavior.AllowGet);
+            }
+
+            var meals = new List<object>();
+
+            try
+            {
+                X.Open();
+                string sql = "SELECT MealType, Choice, ChoiceDate FROM MealChoice WHERE Account=@Account ORDER BY ChoiceDate DESC";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Account", account);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    meals.Add(new
+                    {
+                        日期 = Convert.ToDateTime(reader["ChoiceDate"]).ToString("yyyy-MM-dd"),
+                        餐別 = reader["MealType"].ToString(),
+                        餐點 = reader["Choice"].ToString()
+                    });
+                }
+                reader.Close();
+            }
+            finally
+            {
+                X.Close();
+            }
+
+            return Json(new { success = true, data = meals }, JsonRequestBehavior.AllowGet);
+        }
+
+
+        public ActionResult PictogramIndex()
         {
             string account = Session["LoginUser"]?.ToString();
             ViewBag.Account = account;
+            return View("~/Views/Diary/PictogramArea.cshtml");
+        }
+        public ActionResult MealIndex(string date)
+        {
+            string account = Session["LoginUser"]?.ToString();
+            DateTime selectedDate = string.IsNullOrEmpty(date) ? DateTime.Today : DateTime.Parse(date);
+            ViewBag.SelectedDate = selectedDate.ToString("yyyy-MM-dd");
+
+            List<MealChoiceEntry> meals = new List<MealChoiceEntry>();
+            var mealOptions = new Dictionary<string, List<string>>(); 
+
+            try
+            {
+                X.Open();
+
+                // 抓當日紀錄
+                string sql = "SELECT MealType, Choice, ChoiceDate FROM MealChoice WHERE Account=@Account AND ChoiceDate=@ChoiceDate";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Account", account);
+                cmd.Parameters.AddWithValue("@ChoiceDate", selectedDate.Date);
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    meals.Add(new MealChoiceEntry
+                    {
+                        MealType = reader["MealType"].ToString(),
+                        Choice = reader["Choice"].ToString(),
+                        ChoiceDate = Convert.ToDateTime(reader["ChoiceDate"])
+                    });
+                }
+                reader.Close();
+
+                // 抓 Meal.sql 選項
+                string sql2 = "SELECT * FROM Meal";
+                SqlCommand cmd2 = new SqlCommand(sql2, X);
+                SqlDataReader r2 = cmd2.ExecuteReader();
+                while (r2.Read())
+                {
+                    string problem = r2["Problem"].ToString(); 
+                    var list = new List<string>();
+
+                    if (r2["Option1"] != DBNull.Value) list.Add(r2["Option1"].ToString());
+                    if (r2["Option2"] != DBNull.Value) list.Add(r2["Option2"].ToString());
+                    if (r2["Option3"] != DBNull.Value) list.Add(r2["Option3"].ToString());
+
+                    mealOptions[problem] = list;
+                }
+                r2.Close();
+            }
+            finally { X.Close(); }
+
+            ViewBag.Meals = meals;
+            ViewBag.MealOptions = mealOptions;
+            ViewBag.Account = Session["LoginUser"];
+
             return View("~/Views/Diary/MealArea.cshtml");
         }
+
 
         public ActionResult Index()
         {

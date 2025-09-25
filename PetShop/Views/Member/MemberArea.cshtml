@@ -6,22 +6,25 @@
         max-width: 300px;
     }
 
-    .user-links a {
-        display: block;
-        padding: 10px 15px;
-        background-color: #537db7;
-        color: white;
-        text-decoration: none;
-        border-radius: 5px;
-        text-align: center;
-    }
+        .user-links a {
+            display: block;
+            padding: 10px 15px;
+            background-color: #537db7;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+        }
 
-    .user-links a:hover {
-        background-color: #3a5ea0;
-    }
+            .user-links a:hover {
+                background-color: #3a5ea0;
+            }
 </style>
 <h3>用戶專區</h3>
 <div class="user-links">
     @Html.ActionLink("日記", "DiaryIndex")
     @Html.ActionLink("餐點選擇", "MealIndex")
+    @Html.ActionLink("統計圖表", "PictogramIndex")
 </div>
+<!DOCTYPE html>
+

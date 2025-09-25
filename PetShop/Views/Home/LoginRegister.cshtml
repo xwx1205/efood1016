@@ -53,10 +53,33 @@
 </script>
 
 <style>
+    
     body {
-        background: linear-gradient(to right, #f9f9f9, #e9eff5);
+        background: linear-gradient(rgba(249,249,249,0.7), rgba(233,239,245,0.7)), url('/Image/food.png') no-repeat center center fixed;
+        background-size: cover;
         font-family: 'Segoe UI', sans-serif;
         margin: 0;
+    }
+
+    .title-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 15vh;
+    }
+
+    .title-bar {
+        background-color: #4a90e2;
+        color: #fff; /* 白字 */
+        padding: 12px;
+        font-weight: bold;
+        text-align: center;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        width: 385px; /* 跟 card 一樣寬 */
+        font-size: calc(385px / 8); /* 自動依寬度調整，數字可微調 */
+        line-height: 1.2;
+        white-space: nowrap; /* 不換行 */
     }
 
     /* 外層容器：讓卡片置中 */
@@ -64,7 +87,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height:90vh;
+        height:50vh;
     }
 
     /* 卡片樣式 */
@@ -74,7 +97,7 @@
         border-radius: 12px;
         box-shadow: 0 6px 20px rgba(0,0,0,0.1);
         width: 350px;
-        min-height: 400px;
+        min-height: 300px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -143,7 +166,14 @@
     }
 </style>
 
+<div class="title-container">
+    <div class="title-bar">
+        今  天  吃  什  麼
+    </div>
+</div>
+
 <div class="container">
+
     <div class="card">
         <!-- 登入 -->
         <div id="One">

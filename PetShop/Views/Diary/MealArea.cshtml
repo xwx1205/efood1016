@@ -1,63 +1,160 @@
-﻿
-@Scripts.Render("~/bundles/jquery")
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var meals = ViewBag.Meals as List<PetShop.Models.MealChoiceEntry> ?? new List<PetShop.Models.MealChoiceEntry>();
+    var selectedDate = ViewBag.SelectedDate as string;
+    var mealOptions = ViewBag.MealOptions as Dictionary<string, List<string>> ?? new Dictionary<string, List<string>>();
+}
 
-<h3>請選擇你今天的餐點：</h3>
-<h5>
-    <span id="Qtext"></span><br />
-    <img id="Qimg" /><br />
-    <span id="optionsArea"></span>
-    <span id="result"></span>
-</h5>
+<h2>餐點選擇</h2>
 
-<br />
-<button id="start">取得餐點選單</button>
-<button id="submit" style="display:none">確認送出</button>
+<label>選擇日期：</label>
+<input type="date" id="mealDate" value="@selectedDate" />
 
+<hr />
+
+<form id="mealForm">
+    <label>早餐:</label>
+    <select id="breakfast">
+        <option value="">請選擇早餐</option>
+        @if (mealOptions.ContainsKey("早餐推薦"))
+        {
+            foreach (var opt in mealOptions["早餐推薦"])
+            {
+                <option>@opt</option>
+            }
+        }
+    </select>
+    <input type="text" id="breakfastCustom" placeholder="自行輸入早餐" />
+    <br /><br />
+
+    <label>午餐:</label>
+    <select id="lunch">
+        <option value="">請選擇午餐</option>
+        @if (mealOptions.ContainsKey("午餐推薦"))
+        {
+            foreach (var opt in mealOptions["午餐推薦"])
+            {
+                <option>@opt</option>
+            }
+        }
+    </select>
+    <input type="text" id="lunchCustom" placeholder="自行輸入午餐" />
+    <br /><br />
+
+    <label>晚餐:</label>
+    <select id="dinner">
+        <option value="">請選擇晚餐</option>
+        @if (mealOptions.ContainsKey("晚餐推薦"))
+        {
+            foreach (var opt in mealOptions["晚餐推薦"])
+            {
+                <option>@opt</option>
+            }
+        }
+    </select>
+    <input type="text" id="dinnerCustom" placeholder="自行輸入晚餐" />
+    <br /><br />
+
+    <button type="button" id="saveMeals">儲存餐點</button>
+</form>
+
+<h3>已選餐點 (@selectedDate)</h3>
+<ul id="chosenMeals">
+    @{
+        var order = new[] { "早餐", "午餐", "晚餐" };
+        foreach (var mealType in order)
+        {
+            var m = meals.FirstOrDefault(x => x.MealType == mealType);
+            if (m != null)
+            {
+                <li id="meal_@m.MealType">@m.MealType: @m.Choice (@m.ChoiceDate.ToString("yyyy-MM-dd"))</li>
+            }
+            else
+            {
+                <li id="meal_@mealType">@mealType: </li>
+            }
+        }
+    }
+</ul>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
-    let selectedOption = "";
-    let problemNo = 0;
+    $(document).ready(function(){
+        function saveMeal(mealType, selectId, inputId){
+            let choice = $(inputId).val().trim() || $(selectId).val();
+            if(!choice) return;
 
-    $(document).ready(function () {
-        $("#start").click(function () {
-            problemNo++;
-            $.ajax({
-                type: 'POST',
-                dataType: "json",
-                data: JSON.stringify({ count: problemNo }),
-                contentType: 'application/json; charset=utf-8',
-                url: '@Url.Action("Check", "Home")',
-                success: function (data) {
-                    $("#Qtext").text(data.Problem);
-
-                    let imgPath = "/Images/meal.png";
-                    $("#Qimg").attr("src", imgPath);
-                    $("#Qimg").attr("style", "width:150px;height:150px");
-
-                    // 顯示單選選項
-                    let html = "";
-                    for (let i = 0; i < data.Options.length; i++) {
-                        html += `<label><input type="radio" name="mealChoice" value="${data.Options[i]}" /> ${data.Options[i]}</label><br/>`;
+            $.post('/Home/SaveMealChoice', {
+                mealType: mealType,
+                selectedOption: choice,
+                date: $('#mealDate').val()
+            }, function(res){
+                if(res.success){
+                    var liId = '#meal_' + mealType;
+                    if($(liId).length > 0){
+                        $(liId).text(mealType + ": " + choice + " (" + $('#mealDate').val() + ")");
+                    }else{
+                        $('#chosenMeals').append('<li id="meal_' + mealType + '">' + mealType + ": " + choice + " (" + $('#mealDate').val() + ")</li>");
                     }
-                    $("#optionsArea").html(html);
-
-                    $("#submit").show();
-                },
-                error: function () {
-                    alert("取得資料失敗！");
+                } else {
+                    alert("儲存失敗: " + res.message);
                 }
             });
+        }
+
+        $('#saveMeals').click(function(){
+            saveMeal('早餐', '#breakfast', '#breakfastCustom');
+            saveMeal('午餐', '#lunch', '#lunchCustom');
+            saveMeal('晚餐', '#dinner', '#dinnerCustom');
         });
 
-        $("#submit").click(function () {
-            selectedOption = $("input[name='mealChoice']:checked").val();
-            if (!selectedOption) {
-                $("#result").text("請先選擇一個餐點！");
-                return;
+        // 日期切換
+        $('#mealDate').change(function(){
+            var newDate = $(this).val();
+            if(newDate){
+                window.location.href = '/Home/MealIndex?date=' + newDate;
             }
-            $("#result").text("你選擇的餐點是：" + selectedOption);
-            $("#submit").hide();
         });
+
+        // 預設載入已存的選擇
+        @foreach(var m in meals){
+            <text>
+            $('#@m.MealType.ToLower()').val('@m.Choice');
+            $('#@m.MealType.ToLower()Custom').val('@m.Choice');
+            </text>
+        }
+
+        // 選單選了值就清空輸入框
+        $('#breakfast').change(function(){ if($(this).val()) $('#breakfastCustom').val(''); });
+        $('#lunch').change(function(){ if($(this).val()) $('#lunchCustom').val(''); });
+        $('#dinner').change(function(){ if($(this).val()) $('#dinnerCustom').val(''); });
+
+        // 輸入框打字就清空選單
+        $('#breakfastCustom').on('input', function(){ if($(this).val()) $('#breakfast').val(''); });
+        $('#lunchCustom').on('input', function(){ if($(this).val()) $('#lunch').val(''); });
+        $('#dinnerCustom').on('input', function(){ if($(this).val()) $('#dinner').val(''); });
     });
+</script>
+<button onclick="saveMeal()">輸出我的全部餐點紀錄</button>
+
+<script>
+    function saveMeal() {
+        $.getJSON('/Home/GetAllMealRecords', function (res) {
+            if (res.success) {
+                if (res.data.length === 0) {
+                    alert("目前沒有任何紀錄");
+                    return;
+                }
+                // 匯出 Excel
+                alasql('SELECT * INTO XLSX("我的餐點紀錄.xlsx",{headers:true}) FROM ?', [res.data]);
+            } else {
+                alert("讀取失敗: " + res.message);
+            }
+        });
+    }
 </script>
 
 
+<script src="https://cdn.jsdelivr.net/alasql/0.3/alasql.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.7.12/xlsx.core.min.js"></script>
