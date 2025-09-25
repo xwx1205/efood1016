@@ -10,7 +10,7 @@ namespace PetShop.Controllers
 {
     public class HomeController : Controller
     {
-        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\佳芸\Desktop\efood\efood\PetShop\App_Data\Pet.mdf;Integrated Security=True");
+        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\佳芸\Desktop\efood\efood\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
         public MyDbContext db = new MyDbContext();
         public ActionResult LeaveHome()
         {
@@ -176,22 +176,21 @@ namespace PetShop.Controllers
         {
             string account = Session["LoginUser"]?.ToString();
             List<DiaryEntry> userDiaries = new List<DiaryEntry>();
+            List<Food> foodList = new List<Food>();
 
             try
             {
                 X.Open();
+                // 取得日記
                 string G = "SELECT Content, CreateTime, Food, Calories FROM Diary WHERE Account = @Account";
-
                 if (!string.IsNullOrEmpty(date))
                 {
                     G += " AND CONVERT(date, CreateTime) = @SelectedDate";
                 }
-
                 G += " ORDER BY CreateTime DESC";
 
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", account);
-
                 if (!string.IsNullOrEmpty(date))
                 {
                     DateTime selectedDate;
@@ -199,20 +198,15 @@ namespace PetShop.Controllers
                     {
                         Q.Parameters.AddWithValue("@SelectedDate", selectedDate.Date);
                     }
-                    else
-                    {
-                        // 日期轉換失敗也可忽略，視情況記錄錯誤
-                    }
                 }
-
                 SqlDataReader reader = Q.ExecuteReader();
+
                 while (reader.Read())
                 {
                     string content = reader["Content"] as string ?? "";
                     DateTime createTime = reader["CreateTime"] != DBNull.Value ? Convert.ToDateTime(reader["CreateTime"]) : DateTime.MinValue;
                     string food = reader["Food"] as string ?? "";
                     int calories = reader["Calories"] != DBNull.Value ? Convert.ToInt32(reader["Calories"]) : 0;
-
                     userDiaries.Add(new DiaryEntry
                     {
                         Content = content,
@@ -220,9 +214,25 @@ namespace PetShop.Controllers
                         Food = food,
                         Calories = calories
                     });
-
                 }
                 reader.Close();
+
+                // 取得 Food 資料
+                string foodSql = "SELECT * FROM Food";
+                SqlCommand foodCmd = new SqlCommand(foodSql, X);
+                SqlDataReader foodReader = foodCmd.ExecuteReader();
+                while (foodReader.Read())
+                {
+                    foodList.Add(new Food
+                    {
+                        食品名稱 = foodReader["食品名稱"].ToString(),
+                        熱量_kcal = Convert.ToInt32(foodReader["熱量_kcal"]),
+                        蛋白質_g = Convert.ToInt32(foodReader["蛋白質_g"]),
+                        脂肪_g = Convert.ToInt32(foodReader["脂肪_g"]),
+                        碳水化合物_g = Convert.ToInt32(foodReader["碳水化合物_g"])
+                    });
+                }
+                foodReader.Close();
             }
             finally
             {
@@ -231,6 +241,7 @@ namespace PetShop.Controllers
             ViewBag.Account = account;
             ViewBag.UserDiaries = userDiaries;
             ViewBag.SelectedDate = date;
+            ViewBag.FoodList = foodList;
             return View("~/Views/Diary/DiaryArea.cshtml");
         }
         [HttpPost]

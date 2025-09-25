@@ -2,6 +2,7 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     var entries = ViewBag.UserDiaries as List<PetShop.Models.DiaryEntry>;
     var selectedDate = ViewBag.SelectedDate as string;
+    var foodList = ViewBag.FoodList as List<PetShop.Models.Food>;
 }
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -9,7 +10,7 @@
     #MyCanvas {
         flex: 1; /* 和左邊同寬，或你可用固定寬度 */
         max-width: 600px;
-        height: 100%;
+        min-height:400px;
         background: #fffef8;
         border-radius: 8px;
         box-shadow: 0 3px 10px rgba(0,0,0,0.1);
@@ -53,18 +54,16 @@
                     </div>
                     <select id="foodSelect" name="FoodCalories" onchange="showCalories()">
                         <option value="">-- 請選擇食物 --</option>
-
-                        <optgroup label="水果">
-                            <option value="89">香蕉 (100g)</option>
-                            <option value="52">蘋果 (100g)</option>
-                            <option value="30">西瓜 (100g)</option>
-                        </optgroup>
-
-                        <optgroup label="肉類">
-                            <option value="165">雞胸肉 (100g)</option>
-                            <option value="250">牛排 (100g)</option>
-                            <option value="143">雞蛋 (100g)</option>
-                        </optgroup>
+                        @if (foodList != null)
+                        {
+                            foreach (var food in foodList)
+                            {
+                                <option value="@food.熱量_kcal"
+                                        data-protein="@food.蛋白質_g"
+                                        data-fat="@food.脂肪_g"
+                                        data-carb="@food.碳水化合物_g">@food.食品名稱 (@food.熱量_kcal kcal)</option>
+                            }
+                        }
                     </select>
                     <input type="hidden" id="foodName" name="FoodName" />
                     <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
@@ -128,11 +127,16 @@
     var MyData = {
         type: "bar",
         data: {
-            labels: [], // 食物名稱
+            labels: ["熱量", "蛋白質", "脂肪", "碳水化合物"],
             datasets: [{
-                label: "熱量 (kcal)",
-                data: [], // 對應的熱量
-                backgroundColor: ["rgba(75,192,192,0.6)"]
+                label: "營養成分",
+                data: [],
+                backgroundColor: [
+                    "rgba(75,192,192,0.6)",
+                    "rgba(255,99,132,0.6)",
+                    "rgba(255,206,86,0.6)",
+                    "rgba(54,162,235,0.6)"
+                ]
             }]
         },
         options: {
@@ -147,18 +151,19 @@
         let select = document.getElementById("foodSelect");
         let value = select.value;
         let text = select.options[select.selectedIndex].text;
-        let result = document.getElementById("result");
+        let protein = select.options[select.selectedIndex].getAttribute("data-protein");
+        let fat = select.options[select.selectedIndex].getAttribute("data-fat");
+        let carb = select.options[select.selectedIndex].getAttribute("data-carb");
 
         if (value) {
             // 更新圖表
-            MyChart.data.labels = [text];
-            MyChart.data.datasets[0].data = [value];
+            MyChart.data.labels = ["熱量", "蛋白質", "脂肪", "碳水化合物"];
+            MyChart.data.datasets[0].data = [value, protein, fat, carb];
             MyChart.update();
 
             // 把食物名稱存進隱藏欄位
             document.getElementById("foodName").value = text;
         } else {
-            result.innerText = "";
             document.getElementById("foodName").value = "";
         }
     }

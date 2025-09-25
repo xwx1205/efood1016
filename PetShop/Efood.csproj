@@ -174,9 +174,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="App_Data\Pet.mdf" />
-    <Content Include="App_Data\Pet_log.ldf">
-      <DependentUpon>Pet.mdf</DependentUpon>
+    <Content Include="App_Data\FoodDB.mdf" />
+    <Content Include="App_Data\FoodDB_log.ldf">
+      <DependentUpon>FoodDB.mdf</DependentUpon>
     </Content>
     <Content Include="Content\bootstrap-grid.css" />
     <Content Include="Content\bootstrap-grid.min.css" />
