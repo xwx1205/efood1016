@@ -1,0 +1,27 @@
+﻿@model PetShop.Models.RegisterUser
+
+<div class="container">
+    <h2>會員資料</h2>
+    @if (Model != null)
+    {
+        <p><strong>帳號：</strong>@Model.RegisterAccount</p>
+        <p><strong>姓名：</strong>@Model.RegisterRealName</p>
+        <p><strong>電話：</strong>@Model.RegisterPhone</p>
+        <p><strong>生日：</strong>@Model.RegisterBirthday</p>
+        <p><strong>身高：</strong>@Model.RegisterHeight</p>
+        <p><strong>體重：</strong>@Model.RegisterWeight</p>
+        <p>
+            <strong>照片：</strong><br />
+            <img src="~/Photo/@Model.ImageName"
+                 alt="會員照片"
+                 style="width:100px; height:100px; border-radius:50%; object-fit:cover;" />
+
+        </p>
+    }
+    else
+    {
+        <p>找不到會員資料。</p>
+    }
+
+    @*@Html.ActionLink("回登入後頁面", "CheckIn", new { @style = "font-size:16px;color:blue" })*@
+</div>

@@ -59,14 +59,20 @@
                         <option value="">-- 請選擇食材 --</option>
                         @if (foodList != null)
                         {
-                            foreach (var food in foodList)
+                            var groupedFoods = foodList.GroupBy(f => f.Category);
+                            foreach (var group in groupedFoods)
                             {
-                                <option value="@food.熱量_kcal"
-                                        data-protein="@food.蛋白質_g"
-                                        data-fat="@food.脂肪_g"
-                                        data-carb="@food.碳水化合物_g">
-                                    @food.食品名稱 (@food.熱量_kcal kcal)
-                                </option>
+                                <optgroup label="@group.Key">
+                                    @foreach (var food in group)
+                                    {
+                                        <option value="@food.Calories"
+                                                data-protein="@food.Protein"
+                                                data-fat="@food.Fat"
+                                                data-carb="@food.Carbs">
+                                            @food.Name (@food.Calories kcal)
+                                        </option>
+                                    }
+                                </optgroup>
                             }
                         }
                     </select>
@@ -74,14 +80,20 @@
                         <option value="">-- 請選擇食物 --</option>
                         @if (commonFoods != null)
                         {
-                            foreach (var common in commonFoods)
+                            var groupedCommon = commonFoods.GroupBy(f => f.Category);
+                            foreach (var group in groupedCommon)
                             {
-                                <option value="@common.Calories"
-                                        data-protein="@common.Protein"
-                                        data-fat="@common.Fat"
-                                        data-carb="@common.Carbs">
-                                    @common.Name (@common.Calories kcal)
-                                </option>
+                                <optgroup label="@group.Key">
+                                    @foreach (var common in group)
+                                    {
+                                        <option value="@common.Calories"
+                                                data-protein="@common.Protein"
+                                                data-fat="@common.Fat"
+                                                data-carb="@common.Carbs">
+                                            @common.Name (@common.Calories kcal)
+                                        </option>
+                                    }
+                                </optgroup>
                             }
                         }
                     </select>

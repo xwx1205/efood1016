@@ -11,7 +11,10 @@ namespace PetShop.Models
         public string Password { get; set; }
         public string RealName { get; set; }
         public string Phone { get; set; }
-        public int Birthyear { get; set; }
+        public float Weight { get; set; }
+        public float Height { get; set; }
+        public string BirthDay { get; set; }
+        public string ImageName { get; set; }
         public string ResetToken { get; set; }
         public DateTime? ResetTokenExpire { get; set; }
     }

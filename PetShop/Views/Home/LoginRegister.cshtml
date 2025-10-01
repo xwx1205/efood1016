@@ -199,32 +199,48 @@
             {
                 <div class="alert-danger">@TempData["Note"]</div>
             }
-            @using (Html.BeginForm("Register", "Home"))
+            @using (Html.BeginForm("Register", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
             {
+
+                @Html.LabelFor(m => m.RegisterRealName)
+                @Html.TextBoxFor(m => m.RegisterRealName, new { @id = "C", @class = "P" });
+                @Html.ValidationMessageFor(m => m.RegisterRealName, null, new { @Class = "S" })
+                <br />
+
                 @Html.LabelFor(m => m.RegisterAccount)
-                @Html.TextBoxFor(m => m.RegisterAccount, new { @class = "P" })
+                @Html.TextBoxFor(m => m.RegisterAccount, new { @id = "A", @class = "P" });
                 @Html.ValidationMessageFor(m => m.RegisterAccount, null, new { @Class = "S" })
                 <br />
 
                 @Html.LabelFor(m => m.RegisterPassword)
-                <div style="position: relative;">
-                    @Html.PasswordFor(m => m.RegisterPassword, new { @class = "P", id = "regPwd" })
-                    <button type="button" onclick="togglePwd()" style="position: absolute; right: 10px; top: 5px;">
-                        👁
-                    </button>
-                </div>
-                @Html.ValidationMessageFor(m => m.RegisterPassword, null, new { @Class = "S" })
+                @Html.TextBoxFor(m => m.RegisterPassword, new { @id = "B", @class = "P" });
                 <br />
 
-                @Html.LabelFor(m => m.RegisterRealname)
-                @Html.TextBoxFor(m => m.RegisterRealname, new { @class = "P" })
-                @Html.ValidationMessageFor(m => m.RegisterRealname, null, new { @Class = "S" })
+                @Html.LabelFor(m => m.RegisterBirthday)
+                @Html.TextBoxFor(m => m.RegisterBirthday, new { @id = "F", @class = "P" });
+                @Html.ValidationMessageFor(m => m.RegisterBirthday, null, new { @Class = "S" })
                 <br />
 
                 @Html.LabelFor(m => m.RegisterPhone)
-                @Html.TextBoxFor(m => m.RegisterPhone, new { @class = "P" })
+                @Html.TextBoxFor(m => m.RegisterPhone, new { @id = "D", @class = "P" });
                 @Html.ValidationMessageFor(m => m.RegisterPhone, null, new { @Class = "S" })
                 <br />
+
+                @Html.LabelFor(m => m.RegisterWeight)
+                @Html.TextBoxFor(m => m.RegisterWeight, new { @class = "P", step = "0.1", type = "number" })
+                @Html.ValidationMessageFor(m => m.RegisterWeight, null, new { @class = "S" })
+                <br />
+
+                @Html.LabelFor(m => m.RegisterHeight)
+                @Html.TextBoxFor(m => m.RegisterHeight, new { @id = "E", @class = "P" });
+                @Html.ValidationMessageFor(m => m.RegisterHeight, null, new { @Class = "S" })
+                <br />
+
+                @Html.LabelFor(m => m.ImageName)
+                <input name="ImageName" type="file" />
+                @Html.ValidationMessageFor(m => m.ImageName, null, new { @Class = "S" })
+                <br />
+
 
                 <input type="submit" value="註冊" class="btn btn-primary" />
             }

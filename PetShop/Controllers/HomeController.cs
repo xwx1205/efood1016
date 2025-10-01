@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Web.Mvc;
 
@@ -12,32 +13,81 @@ namespace PetShop.Controllers
     {
         public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\efood\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
         public MyDbContext db = new MyDbContext();
+        public string Result2 { get; set; }
+
+        //會員資料
+        public ActionResult MemberInfo()
+        {
+            string account = Session["LoginUser"].ToString();
+            Models.RegisterUser member = null;
+
+            try
+            {
+                X.Open();
+                string sql = "SELECT * FROM [Member] WHERE Account = @Account";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Account", account);
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    member = new Models.RegisterUser
+                    {
+                        RegisterAccount = reader["Account"].ToString(),
+                        RegisterRealName = reader["RealName"].ToString(),
+                        RegisterPhone = reader["Phone"].ToString(),
+                        RegisterWeight = float.Parse(reader["Weight"].ToString()),
+                        RegisterHeight = float.Parse(reader["Height"].ToString()),
+                        RegisterBirthday = reader["Birthday"].ToString(),
+                        ImageName = reader["ImageName"].ToString()
+                    };
+                }
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("會員查詢錯誤：" + ex.Message);
+            }
+            finally
+            {
+                X.Close();
+            }
+
+            return View(member);
+        }
+
         public ActionResult LeaveHome()
         {
             TempData["Choice"] = "One";
             return RedirectToAction("LoginRegister");
         }
-        public string AddUser(string user, string pwd, string realname, string phone)
+        public string AddUser(string phone, string pwd, string realname, string user, float weight, float height, string birthday, string imagename)
         {
             string Response;
             try
             {
                 X.Open();
-                string G = "Insert INTO [Member] (Account, [Password], RealName, Phone) Values (@Account, @Password, @RealName, @Phone)";
+                string G = "INSERT INTO [Member](Account, Password,RealName,Phone,Weight,Height,BirthDay,ImageName) VALUES(@Account,@Password,@RealName,@Phone,@Weight,@Height,@BirthDay,@ImageName)";
                 Debug.WriteLine(G);
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", user);
                 Q.Parameters.AddWithValue("@Password", pwd);
                 Q.Parameters.AddWithValue("@RealName", realname);
                 Q.Parameters.AddWithValue("@Phone", phone);
+                Q.Parameters.AddWithValue("@Weight", weight);
+                Q.Parameters.AddWithValue("@Height", height);
+                Q.Parameters.AddWithValue("@BirthDay", birthday);
+                Q.Parameters.AddWithValue("@ImageName", imagename);
                 Q.ExecuteNonQuery();
-                Response = "註冊成功";
+                Response = "註冊成功-" + Result2;
             }
             catch (Exception ex)
             {
-                Response = "註冊失敗" + ex.Message;
+                Response = "開檔失敗" + ex.Message;
             }
-            finally { X.Close(); }
+            finally
+            {
+                X.Close();
+            }
             return Response;
         }
         public string FindUser(string user)
@@ -46,23 +96,30 @@ namespace PetShop.Controllers
             try
             {
                 X.Open();
-                string G = "Select * from [Member] where Account= @User";
-                //Debug.WriteLine("SQL=" + G);
+
+                string G = "Select * from [Member] where Account=@User";
+
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@User", user);
+                Q.ExecuteNonQuery();
+
                 SqlDataReader R = Q.ExecuteReader();
                 if (R.Read() == true)
                 {
+                    Debug.WriteLine("AAAAA");
                     Result = R["Password"].ToString().Trim();
                 }
                 else
                 {
+                    Debug.WriteLine("BBBB");
                     Result = "非會員";
                 }
+
             }
             catch (Exception)
             {
-                Result = "開檔失敗";
+                Debug.WriteLine("CCCC");
+                Result = "開檔失敗X";
             }
             finally { X.Close(); }
             return Result;
@@ -71,17 +128,49 @@ namespace PetShop.Controllers
         {
             string User = Request["RegisterAccount"];
             string Pwd = Request["RegisterPassword"];
-            string Realname = Request["RegisterRealname"];
+            string RealName = Request["RegisterRealName"];
             string Phone = Request["RegisterPhone"];
+            string Weight = Request["RegisterWeight"];
+            string Height = Request["RegisterHeight"];
+            string BirthDay = Request["RegisterBirthDay"];
+            string imagename = "";
+
             User = User.Trim();
             Pwd = Pwd.Trim();
-            Realname = Realname.Trim();
+            RealName = RealName.Trim();
             Phone = Phone.Trim();
-            String Result = FindUser(User);
+            BirthDay = BirthDay.Trim();
+            float W = float.Parse(Weight);
+            float H = float.Parse(Height);
+            string Result = FindUser(User);
+            imagename = imagename.Trim();
+
+            try
+            {
+                if (Request.Files["imagename"] != null && Request.Files["imagename"].ContentLength > 0)
+                {
+                    imagename = System.IO.Path.GetFileName(Request.Files["imagename"].FileName);
+                }
+                X.Open();
+                X.Close();
+                Result2 = "資料庫成功";
+
+                string photoFolder = Server.MapPath("~/Photo");
+                string fpath = Path.Combine(photoFolder, imagename);
+                var file = Request.Files["imagename"];
+                file.SaveAs(fpath);
+            }
+            catch (Exception e)
+            {
+                X.Close();
+                Result2 = "資料庫失敗:" + e;
+            }
+            ;
+
             string Ans;
             if (Result == "非會員")
             {
-                Ans = AddUser(User, Pwd, Realname, Phone);
+                Ans = AddUser(Phone, Pwd, RealName, User, W, H, BirthDay, imagename);
             }
             else
             {
@@ -94,15 +183,15 @@ namespace PetShop.Controllers
         {
             string User = Request["Account"];
             string Pwd = Request["Password"];
-
-            if (string.IsNullOrEmpty(User) || string.IsNullOrEmpty(Pwd))
+            string Phone = Request["Phone"];
+            string Ans;
+            if (string.IsNullOrWhiteSpace(User))
             {
-                TempData["Note"] = "請輸入帳號與密碼";
+                TempData["Note"] = "請輸入帳號";
                 TempData["Choice"] = "One";
                 return View("~/Views/Home/LoginRegister.cshtml");
             }
 
-            string Ans;
             string CorrectPwd = FindUser(User.Trim());
             if (CorrectPwd == "非會員")
             {
@@ -116,18 +205,81 @@ namespace PetShop.Controllers
                 }
                 else
                 {
+                    // 登入成功，取會員資料
+                    Models.RegisterUser member = null;
+                    try
+                    {
+                        X.Open();
+                        string sql = "SELECT * FROM [Member] WHERE Account = @Account";
+                        SqlCommand cmd = new SqlCommand(sql, X);
+                        cmd.Parameters.AddWithValue("@Account", User);
+                        SqlDataReader reader = cmd.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            member = new Models.RegisterUser
+                            {
+                                RegisterAccount = reader["Account"].ToString(),
+                                RegisterRealName = reader["RealName"].ToString(),
+                                RegisterPhone = reader["Phone"].ToString(),
+                                RegisterWeight = float.Parse(reader["Weight"].ToString()),
+                                RegisterHeight = float.Parse(reader["Height"].ToString()),
+                                RegisterBirthday = reader["Birthday"].ToString(),
+                                ImageName = reader["ImageName"].ToString()
+                            };
+                        }
+                        reader.Close();
+                    }
+                    finally
+                    {
+                        X.Close();
+                    }
 
+                    // 設定 Session & ViewBag
                     ViewBag.Account = User;
                     Session["LoginUser"] = User;
-                    return View("~/Views/Home/Index.cshtml");
+
+                    //Session["RealName"] = member.RegisterRealName;
+
+                    //if (member != null)
+                    //{
+                    //    ViewBag.ImageName = member.ImageName;
+                    //    Session["ImageName"] = member.ImageName;
+                    //}
+                    if (member != null)
+                    {
+                        Session["RealName"] = member.RegisterRealName;
+                        ViewBag.ImageName = member.ImageName;
+                        Session["ImageName"] = member.ImageName;
+                    }
+                    else
+                    {
+                        Ans = "查無會員資料";
+                        TempData["Note"] = Ans + " | " + Result2;
+                        TempData["Choice"] = "One";
+                        return View("~/Views/Home/LoginRegister.cshtml");
+                    }
+
+                    if (User == "Manager")
+                    {
+                        return RedirectToAction("Manage", "Manager");
+                    }
+                    else
+                    {
+                        return View("~/Views/Home/Index.cshtml");
+                    }
                 }
+
             }
-            TempData["Note"] = Ans;
+            TempData["Note"] = Ans + " | " + Result2; ;
             TempData["Choice"] = "One";
             return View("~/Views/Home/LoginRegister.cshtml");
         }
         public ActionResult LoginRegister()
         {
+            if (Session["Choice"] != null)
+            {
+                TempData["Choice"] = Session["Choice"].ToString();
+            }
             return View();
         }
         public ActionResult Logout()
@@ -226,11 +378,11 @@ namespace PetShop.Controllers
                 {
                     foodList.Add(new Food
                     {
-                        食品名稱 = foodReader["食品名稱"].ToString(),
-                        熱量_kcal = Convert.ToInt32(foodReader["熱量_kcal"]),
-                        蛋白質_g = Convert.ToInt32(foodReader["蛋白質_g"]),
-                        脂肪_g = Convert.ToInt32(foodReader["脂肪_g"]),
-                        碳水化合物_g = Convert.ToInt32(foodReader["碳水化合物_g"])
+                        Name = foodReader["Name"].ToString(),
+                        Calories = Convert.ToInt32(foodReader["Calories"]),
+                        Protein = Convert.ToInt32(foodReader["Protein"]),
+                        Fat = Convert.ToInt32(foodReader["Fat"]),
+                        Carbs = Convert.ToInt32(foodReader["Carbs"])
                     });
                 }
                 foodReader.Close();
@@ -527,7 +679,7 @@ namespace PetShop.Controllers
                         Password = reader["Password"].ToString(),
                         RealName = reader["RealName"].ToString(),
                         Phone = reader["Phone"].ToString(),
-                        Birthyear = Convert.ToInt32(reader["Birthyear"]),
+                        Birthday = Convert.ToInt32(reader["Birthday"]),
                         ResetToken = reader["ResetToken"] == DBNull.Value ? null : reader["ResetToken"].ToString(),
                         ResetTokenExpire = reader["ResetTokenExpire"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["ResetTokenExpire"])
                     };

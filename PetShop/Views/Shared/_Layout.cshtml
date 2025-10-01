@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewBag.Title - efood</title>
@@ -63,25 +63,111 @@
             z-index: 100;
         }
     </style>
+    <style>
+        body {
+            background-color: #f0f7f3;
+            text-align: center;
+        }
+
+        .container {
+            position: relative;
+            width: 80%;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* 頭像 + tooltip */
+        .profile-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+        }
+
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .profile-tooltip {
+            display: none;
+            position: absolute;
+            top: 30px;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.15);
+            min-width: 140px;
+            text-align: left;
+            z-index: 1000;
+        }
+
+        .profile-container:hover .profile-tooltip {
+            display: block;
+        }
+
+        .profile-tooltip a {
+            display: block;
+            color: #466954;
+            text-decoration: none;
+            margin-top: 5px;
+        }
+
+            .profile-tooltip a:hover {
+                text-decoration: underline;
+            }
+    </style>
 </head>
 <body>
     <header>E-食代</header>
     <div style="display: flex; justify-content: flex-end; gap: 20px;">
 
-        @if (ViewBag.Account == null)
+        @if (Session["LoginUser"] == null)
         {
             @Html.ActionLink("登入/註冊", "LeaveHome", new { @style = "font-size:16px;color:blue" })
         }
         else
         {
-            @ViewBag.Account<span>登入</span>
-            @Html.ActionLink("登出", "Logout")
-            @Html.ActionLink("回首頁", "Index", new { @style = "font-size:16px;color:blue;" })
+            @*Session["LoginUser"]<span>登入</span>*@
+            @*@Html.ActionLink("登出", "Logout")*@
         }
-    </div>
-    <main>
+
+        @Html.ActionLink("回首頁", "Index", new { @style = "font-size:16px;color:blue" })
+
         @RenderBody()
-    </main>
-    <h6>版權所有，抄襲必究</h6>
+        <h6>版權所有，抄襲必究</h6>
+
+
+        @* 右上角頭像 + Tooltip *@
+        @if (Session["LoginUser"] != null && Session["ImageName"] != null)
+        {
+            <div class="profile-container">
+                <img src="@Url.Content("~/Photo/" + Session["ImageName"])"
+                     alt="會員照片"
+                     class="profile-pic" />
+
+                <div class="profile-tooltip">
+
+                    <p><strong>@Session["LoginUser"]</strong></p>
+                    <p><strong>@Session["RealName"]</strong></p>
+
+                    <a href="@Url.Action("MemberInfo", "Home", new { account = Session["LoginUser"] })">會員資料</a>
+                    <a href="@Url.Action("Logout", "Home")">登出</a>
+                </div>
+            </div>
+        }
+
+    </div>
 </body>
 </html>
