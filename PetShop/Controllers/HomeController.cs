@@ -168,7 +168,7 @@ namespace PetShop.Controllers
                 X.Close();
             }
 
-            TempData["Msg"] = Response;
+            //TempData["Msg"] = Response;
             return RedirectToAction("DiaryIndex");
         }
 
@@ -177,6 +177,7 @@ namespace PetShop.Controllers
             string account = Session["LoginUser"]?.ToString();
             List<DiaryEntry> userDiaries = new List<DiaryEntry>();
             List<Food> foodList = new List<Food>();
+            List<CommonFood> commonFoods = new List<CommonFood>();
 
             try
             {
@@ -233,6 +234,24 @@ namespace PetShop.Controllers
                     });
                 }
                 foodReader.Close();
+
+                // 取得 CommonFood 資料
+                string CommonSql = "SELECT * FROM CommonFoods";
+                SqlCommand CommonCmd = new SqlCommand(CommonSql, X);
+                SqlDataReader CommonReader = CommonCmd.ExecuteReader();
+                while (CommonReader.Read())
+                {
+                    commonFoods.Add(new CommonFood
+                    {
+                        Name = CommonReader["Name"].ToString(),
+                        Category = CommonReader["Category"].ToString(),
+                        Calories = Convert.ToInt32(CommonReader["Calories"]),
+                        Protein = CommonReader["Protein"] != DBNull.Value ? (decimal?)Convert.ToDecimal(CommonReader["Protein"]) : null,
+                        Fat = CommonReader["Fat"] != DBNull.Value ? (decimal?)Convert.ToDecimal(CommonReader["Fat"]) : null,
+                        Carbs = CommonReader["Carbs"] != DBNull.Value ? (decimal?)Convert.ToDecimal(CommonReader["Carbs"]) : null
+                    });
+                }
+                CommonReader.Close();
             }
             finally
             {
@@ -242,6 +261,7 @@ namespace PetShop.Controllers
             ViewBag.UserDiaries = userDiaries;
             ViewBag.SelectedDate = date;
             ViewBag.FoodList = foodList;
+            ViewBag.CommonFoods = commonFoods;
             return View("~/Views/Diary/DiaryArea.cshtml");
         }
         [HttpPost]
@@ -427,7 +447,7 @@ namespace PetShop.Controllers
             ViewBag.SelectedDate = selectedDate.ToString("yyyy-MM-dd");
 
             List<MealChoiceEntry> meals = new List<MealChoiceEntry>();
-            var mealOptions = new Dictionary<string, List<string>>(); 
+            var mealOptions = new Dictionary<string, List<string>>();
 
             try
             {
@@ -456,7 +476,7 @@ namespace PetShop.Controllers
                 SqlDataReader r2 = cmd2.ExecuteReader();
                 while (r2.Read())
                 {
-                    string problem = r2["Problem"].ToString(); 
+                    string problem = r2["Problem"].ToString();
                     var list = new List<string>();
 
                     if (r2["Option1"] != DBNull.Value) list.Add(r2["Option1"].ToString());
