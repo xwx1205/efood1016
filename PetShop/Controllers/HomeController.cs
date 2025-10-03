@@ -290,11 +290,17 @@ namespace PetShop.Controllers
         [HttpPost]
         public ActionResult DiaryArea()
         {
-            string Content = Request["A"]?.ToString();
-            string FoodName = Request["foodName"]?.ToString();
-            string FoodCaloriesStr = Request["FoodCalories"]?.ToString();
-            int FoodCalories = 0;
-            int.TryParse(FoodCaloriesStr, out FoodCalories);
+            string food = "";
+            if (!string.IsNullOrEmpty(Request["Food"]) && Request["Food"] != "其他")
+                food = Request["Food"];
+            else if (!string.IsNullOrEmpty(Request["CommonFood"]) && Request["CommonFood"] != "其他")
+                food = Request["CommonFood"];
+            else if (Request["Food"] == "其他" || Request["CommonFood"] == "其他")
+                food = Request["FoodOther"];
+
+            string caloriesStr = Request["Calories"];
+            int calories = 0;
+            int.TryParse(caloriesStr, out calories);
 
             string Response;
             try
@@ -302,12 +308,11 @@ namespace PetShop.Controllers
                 string account = Session["LoginUser"]?.ToString();
 
                 X.Open();
-                string G = "INSERT INTO Diary (Account, Content, Food, Calories) VALUES (@Account, @Content, @Food, @Calories)";
+                string G = "INSERT INTO Diary (Account, Food, Calories) VALUES (@Account, @Food, @Calories)";
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", account);
-                Q.Parameters.AddWithValue("@Content", Content);
-                Q.Parameters.AddWithValue("@Food", FoodName);
-                Q.Parameters.AddWithValue("@Calories", FoodCalories);
+                Q.Parameters.AddWithValue("@Food", food);
+                Q.Parameters.AddWithValue("@Calories", calories);
                 Q.ExecuteNonQuery();
                 Response = "建立成功";
             }
@@ -335,7 +340,7 @@ namespace PetShop.Controllers
             {
                 X.Open();
                 // 取得日記
-                string G = "SELECT Content, CreateTime, Food, Calories FROM Diary WHERE Account = @Account";
+                string G = "SELECT Id, CreateTime, Food, Calories FROM Diary WHERE Account = @Account";
                 if (!string.IsNullOrEmpty(date))
                 {
                     G += " AND CONVERT(date, CreateTime) = @SelectedDate";
@@ -356,13 +361,13 @@ namespace PetShop.Controllers
 
                 while (reader.Read())
                 {
-                    string content = reader["Content"] as string ?? "";
+                    int id = (int)reader["Id"];
                     DateTime createTime = reader["CreateTime"] != DBNull.Value ? Convert.ToDateTime(reader["CreateTime"]) : DateTime.MinValue;
                     string food = reader["Food"] as string ?? "";
                     int calories = reader["Calories"] != DBNull.Value ? Convert.ToInt32(reader["Calories"]) : 0;
                     userDiaries.Add(new DiaryEntry
                     {
-                        Content = content,
+                        Id = id,
                         CreateTime = createTime,
                         Food = food,
                         Calories = calories
@@ -379,6 +384,7 @@ namespace PetShop.Controllers
                     foodList.Add(new Food
                     {
                         Name = foodReader["Name"].ToString(),
+                        Category= foodReader["Category"].ToString(),
                         Calories = Convert.ToInt32(foodReader["Calories"]),
                         Protein = Convert.ToInt32(foodReader["Protein"]),
                         Fat = Convert.ToInt32(foodReader["Fat"]),
@@ -416,6 +422,70 @@ namespace PetShop.Controllers
             ViewBag.CommonFoods = commonFoods;
             return View("~/Views/Diary/DiaryArea.cshtml");
         }
+
+        // 取得單筆日記
+        public ActionResult EditDiary(int id)
+        {
+            DiaryEntry entry = null;
+            try
+            {
+                X.Open();
+                string sql = "SELECT * FROM Diary WHERE Id=@Id";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Id", id);
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    entry = new DiaryEntry
+                    {
+                        Id = (int)reader["Id"],
+                        Food = reader["Food"].ToString(),
+                        Calories = Convert.ToInt32(reader["Calories"]),
+                        CreateTime = Convert.ToDateTime(reader["CreateTime"])
+                    };
+                }
+                reader.Close();
+            }
+            finally { X.Close(); }
+            return View("~/Views/Diary/EditDiary.cshtml",entry);
+        }
+
+        // 修改日記
+        [HttpPost]
+        public ActionResult EditDiary(DiaryEntry entry)
+        {
+            try
+            {
+                X.Open();
+                string sql = "UPDATE Diary SET Food=@Food, Calories=@Calories WHERE Id=@Id";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Food", entry.Food);
+                cmd.Parameters.AddWithValue("@Calories", entry.Calories);
+                cmd.Parameters.AddWithValue("@Id", entry.Id);
+                cmd.ExecuteNonQuery();
+            }
+            finally { X.Close(); }
+            return RedirectToAction("DiaryIndex");
+        }
+
+        // 刪除日記
+        [HttpPost]
+        public JsonResult DeleteDiary(int id)
+        {
+            Debug.WriteLine(id);
+            bool success = false;
+            try
+            {
+                X.Open();
+                string sql = "DELETE FROM Diary WHERE Id=@Id";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Id", id);
+                success = cmd.ExecuteNonQuery() > 0;
+            }
+            finally { X.Close(); }
+            return Json(new { success });
+        }
+
         [HttpPost]
         public JsonResult Check(int count)
         {
@@ -679,7 +749,7 @@ namespace PetShop.Controllers
                         Password = reader["Password"].ToString(),
                         RealName = reader["RealName"].ToString(),
                         Phone = reader["Phone"].ToString(),
-                        Birthday = Convert.ToInt32(reader["Birthday"]),
+                        BirthDay = reader["BirthDay"].ToString(),
                         ResetToken = reader["ResetToken"] == DBNull.Value ? null : reader["ResetToken"].ToString(),
                         ResetTokenExpire = reader["ResetTokenExpire"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["ResetTokenExpire"])
                     };
@@ -824,6 +894,5 @@ namespace PetShop.Controllers
             TempData["Note"] = "密碼已成功重設，請重新登入";
             return RedirectToAction("LoginRegister");
         }
-
     }
 }

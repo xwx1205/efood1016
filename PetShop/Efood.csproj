@@ -239,6 +239,7 @@
     <Content Include="Views\Home\ResetPassword.cshtml" />
     <Content Include="Views\Diary\PictogramArea.cshtml" />
     <Content Include="Views\Home\MemberInfo.cshtml" />
+    <Content Include="Views\Diary\EditDiary.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Photo\" />

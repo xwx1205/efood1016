@@ -14,7 +14,5 @@ namespace PetShop.Models
         public decimal? Protein { get; set; }
         public decimal? Fat { get; set; }
         public decimal? Carbs { get; set; }
-        public string 資料來源 { get; set; }
-        public string 來源連結 { get; set; }
     }
 }

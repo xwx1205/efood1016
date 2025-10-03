@@ -4,105 +4,55 @@
     var selectedDate = ViewBag.SelectedDate as string;
     var foodList = ViewBag.FoodList as List<PetShop.Models.Food>;
     var commonFoods = ViewBag.CommonFoods as List<PetShop.Models.CommonFood>;
+    bool isOther = false;
 }
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-    #MyCanvas {
-        flex: 1; /* 和左邊同寬，或你可用固定寬度 */
-        max-width: 600px;
-        min-height: 400px;
-        background: #fffef8;
-        border-radius: 8px;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    .page-title {
+        text-align: left; /* 水平靠左 */
+        margin-left: 20px; /* 可選，與 page-wrapper 左側對齊 */
     }
 
     .page-wrapper {
         display: flex;
-        gap: 20px; /* 左右間距 */
-        align-items: flex-start; /* 頂端對齊 */
+        justify-content: center;
+        gap: 20px;
         padding: 20px;
+        height: 100vh;
         box-sizing: border-box;
-        height: 80vh; /* 視需要調整高度 */
+        overflow: hidden;
     }
 
     .container {
-        flex: 1; /* 撐滿剩餘空間 */
-        max-width: 600px; /* 限制最大寬度，避免太寬 */
-        overflow-y: auto; /* 內容超長可滾動 */
+        flex: 0 0 35%; /* 固定寬度為頁面寬度 35% */
+        max-width: 400px; /* 避免過寬 */
+        display: flex;
+        flex-direction: column;
         background: white;
         padding: 20px;
         border-radius: 8px;
         box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     }
+
+    .diary-list-wrapper {
+        flex: 1; /* 撐滿剩餘空間 */
+        overflow-y: auto; /* 只對日記列表滾動 */
+    }
+
+    .diary-form-wrapper {
+        flex: none; /* 固定高度，不隨內容增長 */
+        width: 100%;
+    }
 </style>
-<div class="page-wrapper">
+<h2 class="page-title">📔 飲食紀錄</h2>
+<div class="page-wrapper" style="flex:1; max-width:1000px;">
     <div class="container mt-5">
-        <h2 class="mb-4">📔 飲食日記</h2>
-
-        <!-- 成功/失敗訊息 -->
-        @if (TempData["Msg"] != null)
-        {
-            <div class="alert alert-info">@TempData["Msg"]</div>
-        }
-
-        <!-- 日記輸入表單 -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-body">
-                <form method="post" action="/Home/DiaryArea">
-                    <div class="form-group">
-                        <label for="diaryContent">請輸入今日的飲食紀錄：</label>
-                        <br />
-                        <textarea class="form-control" id="diaryContent" name="A" rows="3" placeholder="例如：早餐吃了雞蛋和燕麥…"></textarea>
-                    </div>
-                    <select id="foodSelect" name="FoodCalories" onchange="showCalories()">
-                        <option value="">-- 請選擇食材 --</option>
-                        @if (foodList != null)
-                        {
-                            var groupedFoods = foodList.GroupBy(f => f.Category);
-                            foreach (var group in groupedFoods)
-                            {
-                                <optgroup label="@group.Key">
-                                    @foreach (var food in group)
-                                    {
-                                        <option value="@food.Calories"
-                                                data-protein="@food.Protein"
-                                                data-fat="@food.Fat"
-                                                data-carb="@food.Carbs">
-                                            @food.Name (@food.Calories kcal)
-                                        </option>
-                                    }
-                                </optgroup>
-                            }
-                        }
-                    </select>
-                    <select id="commonSelect" name="CommonCalories" onchange="showCalories()">
-                        <option value="">-- 請選擇食物 --</option>
-                        @if (commonFoods != null)
-                        {
-                            var groupedCommon = commonFoods.GroupBy(f => f.Category);
-                            foreach (var group in groupedCommon)
-                            {
-                                <optgroup label="@group.Key">
-                                    @foreach (var common in group)
-                                    {
-                                        <option value="@common.Calories"
-                                                data-protein="@common.Protein"
-                                                data-fat="@common.Fat"
-                                                data-carb="@common.Carbs">
-                                            @common.Name (@common.Calories kcal)
-                                        </option>
-                                    }
-                                </optgroup>
-                            }
-                        }
-                    </select>
-                    <input type="hidden" id="foodName" name="FoodName" />
-                    <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
-                </form>
-            </div>
-        </div>
-        <br />
         <!-- 歷史日記顯示 -->
         <form method="get" action="/Home/DiaryIndex" class="mb-3">
             <label for="searchDate">🔍 選擇日期查看紀錄：</label>
@@ -121,83 +71,223 @@
                 <text>所有日記紀錄：</text>
             }
         </h4>
-
-        @if (entries != null && entries.Count > 0)
-        {
-            <ul class="list-group">
-                @foreach (var entry in entries)
-                {
-                    <li class="list-group-item">
-                        <div class="d-flex justify-content-between">
-                            <span class="text-muted">@entry.CreateTime.ToString("yyyy-MM-dd HH:mm")</span>
-                            <span class="badge badge-secondary">日記</span>
-                        </div>
-                        <div class="mt-2">
-                            @if (!string.IsNullOrWhiteSpace(entry.Content))
-                            {
-                                <div><strong>內容：</strong>@entry.Content</div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(entry.Food))
-                            {
-                                <div><strong>食物：</strong>@entry.Food</div>
-                                <div><strong>熱量：</strong>@entry.Calories kcal</div>
-                            }
-                        </div>
-                    </li>
-                }
-            </ul>
-        }
-        else
-        {
-            <div class="alert alert-secondary">尚無日記紀錄。</div>
-        }
+        <div class="diary-list-wrapper">
+            @if (entries != null && entries.Count > 0)
+            {
+                <ul class="list-group">
+                    @foreach (var entry in entries)
+                    {
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">@entry.CreateTime.ToString("yyyy-MM-dd HH:mm")</span>
+                                <span class="badge badge-secondary">日記</span>
+                            </div>
+                            <div class="mt-2">
+                                @if (!string.IsNullOrWhiteSpace(entry.Food))
+                                {
+                                    <div><strong>食物：</strong>@entry.Food</div>
+                                    <div><strong>熱量：</strong>@entry.Calories kcal</div>
+                                }
+                            </div>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="deleteDiary(@entry.Id, this)">刪除</button>
+                            <a href="@Url.Action("EditDiary", "Home", new { id = entry.Id })" class="btn btn-warning btn-sm">修改</a>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="alert alert-secondary">尚無日記紀錄。</div>
+            }
+        </div>
     </div>
-    <canvas id="MyCanvas"></canvas>
+    <!-- 日記輸入表單 -->
+    <div class="container mt-5 diary-form-wrapper" style="max-width:400px;">
+        <!-- 成功/失敗訊息 -->
+        @if (TempData["Msg"] != null)
+        {
+            <div class="alert alert-info">@TempData["Msg"]</div>
+        }
+        <form method="post" action="/Home/DiaryArea">
+            <div class="form-group">
+                <label for="diaryContent">請選擇食材或常用食物：</label>
+                <br />
+            </div>
+            <select id="foodSelect" name="Food" onchange="onFoodSelectChange()">
+                <option value="">-- 請選擇食材 --</option>
+                @if (foodList != null)
+                {
+                    var groupedFoods = foodList.GroupBy(f => f.Category);
+                    foreach (var group in groupedFoods)
+                    {
+                        <optgroup label="@group.Key">
+                            @foreach (var food in group)
+                            {
+                                <option value="@food.Name"
+                                        data-calories="@food.Calories"
+                                        data-protein="@food.Protein"
+                                        data-fat="@food.Fat"
+                                        data-carb="@food.Carbs">
+                                    @food.Name
+                                </option>
+                            }
+                        </optgroup>
+                    }
+                }
+                <option value="其他" @(isOther ? "selected" : "")>其他</option>
+            </select>
+            <select id="commonSelect" name="CommonFood" onchange="onCommonSelectChange()">
+                <option value="">-- 請選擇食物 --</option>
+                @if (commonFoods != null)
+                {
+                    var groupedCommon = commonFoods.GroupBy(f => f.Category);
+                    foreach (var group in groupedCommon)
+                    {
+                        <optgroup label="@group.Key">
+                            @foreach (var common in group)
+                            {
+                                <option value="@common.Name"
+                                        data-calories="@common.Calories"
+                                        data-protein="@common.Protein"
+                                        data-fat="@common.Fat"
+                                        data-carb="@common.Carbs">
+                                    @common.Name
+                                </option>
+                            }
+                        </optgroup>
+                    }
+                }
+                <option value="其他" @(isOther ? "selected" : "")>其他</option>
+            </select>
+            <br />
+            <input type="text" id="foodOtherInput" name="FoodOther" class="form-control mt-2"
+                   style="display:none;" placeholder="請輸入食物名稱" />
+            <input type="number" id="caloriesInput" name="Calories" class="form-control mt-2"
+                   style="display:none;" placeholder="請輸入熱量" />
+            <br />
+            <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
+        </form>
+    </div>
 </div>
 <script>
-    var ctx = document.getElementById("MyCanvas").getContext("2d");
-    var MyData = {
-        type: "bar",
-        data: {
-            labels: ["熱量", "蛋白質", "脂肪", "碳水化合物"],
-            datasets: [{
-                label: "營養成分",
-                data: [],
-                backgroundColor: [
-                    "rgba(75,192,192,0.6)",
-                    "rgba(255,99,132,0.6)",
-                    "rgba(255,206,86,0.6)",
-                    "rgba(54,162,235,0.6)"
-                ]
-            }]
-        },
-        options: {
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    };
-    var MyChart = new Chart(ctx, MyData);
+    //var ctx = document.getElementById("MyCanvas").getContext("2d");
+    //var MyData = {
+    //    type: "bar",
+    //    data: {
+    //        labels: ["熱量", "蛋白質", "脂肪", "碳水化合物"],
+    //        datasets: [{
+    //            label: "營養成分",
+    //            data: [],
+    //            backgroundColor: [
+    //                "rgba(75,192,192,0.6)",
+    //                "rgba(255,99,132,0.6)",
+    //                "rgba(255,206,86,0.6)",
+    //                "rgba(54,162,235,0.6)"
+    //            ]
+    //        }]
+    //    },
+    //    options: {
+    //        scales: {
+    //            y: { beginAtZero: true }
+    //        }
+    //    }
+    //};
+    //var MyChart = new Chart(ctx, MyData);
 
-    function showCalories() {
-        let select = document.getElementById("foodSelect");
-        let value = select.value;
-        let text = select.options[select.selectedIndex].text;
-        let protein = select.options[select.selectedIndex].getAttribute("data-protein");
-        let fat = select.options[select.selectedIndex].getAttribute("data-fat");
-        let carb = select.options[select.selectedIndex].getAttribute("data-carb");
+    //function showCalories() {
+    //    let select = document.getElementById("foodSelect");
+    //    let value = select.value;
+    //    let text = select.options[select.selectedIndex].text;
+    //    let protein = select.options[select.selectedIndex].getAttribute("data-protein");
+    //    let fat = select.options[select.selectedIndex].getAttribute("data-fat");
+    //    let carb = select.options[select.selectedIndex].getAttribute("data-carb");
 
-        if (value) {
-            // 更新圖表
-            MyChart.data.labels = ["熱量", "蛋白質", "脂肪", "碳水化合物"];
-            MyChart.data.datasets[0].data = [value, protein, fat, carb];
-            MyChart.update();
+    //    if (value) {
+    //        // 更新圖表
+    //        MyChart.data.labels = ["熱量", "蛋白質", "脂肪", "碳水化合物"];
+    //        MyChart.data.datasets[0].data = [value, protein, fat, carb];
+    //        MyChart.update();
 
-            // 把食物名稱存進隱藏欄位
-            document.getElementById("foodName").value = text;
+    //        // 把食物名稱存進隱藏欄位
+    //        document.getElementById("foodName").value = text;
+    //    } else {
+    //        document.getElementById("foodName").value = "";
+    //    }
+    //}
+
+    function onFoodSelectChange() {
+        var foodSelect = document.getElementById('foodSelect');
+        var foodOtherInput = document.getElementById('foodOtherInput');
+        var caloriesInput = document.getElementById('caloriesInput');
+        var selected = foodSelect.options[foodSelect.selectedIndex];
+        var calories = selected.getAttribute('data-calories');
+        if (foodSelect.value === "其他") {
+            foodOtherInput.style.display = '';
+            foodOtherInput.required = true;
+            caloriesInput.style.display = '';
+            caloriesInput.required = true;
+            caloriesInput.value = '';
         } else {
-            document.getElementById("foodName").value = "";
+            foodOtherInput.style.display = 'none';
+            foodOtherInput.required = false;
+            caloriesInput.style.display = 'none';
+            caloriesInput.required = false;
+            if (calories) caloriesInput.value = calories;
         }
     }
 
+    function onCommonSelectChange() {
+        var commonSelect = document.getElementById('commonSelect');
+        var foodOtherInput = document.getElementById('foodOtherInput');
+        var caloriesInput = document.getElementById('caloriesInput');
+        var selected = commonSelect.options[commonSelect.selectedIndex];
+        var calories = selected.getAttribute('data-calories');
+        if (commonSelect.value === "其他") {
+            foodOtherInput.style.display = '';
+            foodOtherInput.required = true;
+            caloriesInput.style.display = '';
+            caloriesInput.required = true;
+            caloriesInput.value = '';
+        } else {
+            foodOtherInput.style.display = 'none';
+            foodOtherInput.required = false;
+            caloriesInput.style.display = 'none';
+            caloriesInput.required = false;
+            if (calories) caloriesInput.value = calories;
+        }
+    }
+
+    document.getElementById('foodSelect').addEventListener('change', function () {
+        var selected = this.options[this.selectedIndex];
+        var calories = selected.getAttribute('data-calories');
+        if (calories && selected.value !== "其他") {
+            document.getElementById('caloriesInput').value = calories;
+        }
+    });
+
+    document.getElementById('commonSelect').addEventListener('change', function () {
+        var selected = this.options[this.selectedIndex];
+        var calories = selected.getAttribute('data-calories');
+        if (calories && calories !== "其他") {
+            document.getElementById('caloriesInput').value = calories;
+        }
+    });
+
+    function deleteDiary(id, btn) {
+        console.log("前端傳入的 id:", id);
+        if (!confirm('確定要刪除嗎？')) return;
+        fetch('/Home/DeleteDiary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id=' + encodeURIComponent(id)
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    btn.closest("li").remove();
+                } else {
+                    alert("刪除失敗，找不到資料");
+                }
+            });
+    }
 </script>
