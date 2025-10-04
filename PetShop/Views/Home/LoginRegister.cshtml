@@ -237,7 +237,8 @@
                 <br />
 
                 @Html.LabelFor(m => m.ImageName)
-                <input name="ImageName" type="file" />
+                <input name="ImageName" type="file" accept=".jpg" />
+
                 @Html.ValidationMessageFor(m => m.ImageName, null, new { @Class = "S" })
                 <br />
 

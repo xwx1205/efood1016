@@ -40,6 +40,7 @@ namespace PetShop.Models
         [Display(Name = "生日:")]
         public string RegisterBirthday { get; set; }
 
+        [RegularExpression(@".*\.(jpg)$", ErrorMessage = "只允許上傳 JPG圖片")]
         [Display(Name = "照片上傳:")]
         public string ImageName { get; set; }
 

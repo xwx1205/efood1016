@@ -5,15 +5,97 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Policy;
 using System.Web.Mvc;
+using System.Web.UI.WebControls;
 
 namespace PetShop.Controllers
 {
     public class HomeController : Controller
     {
-        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\efood\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
+        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\Vivobook_15\source\repos\efoodyunn\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
         public MyDbContext db = new MyDbContext();
         public string Result2 { get; set; }
+
+        //修改會員資料
+        [HttpPost]
+
+        public ActionResult UpdateMemberInfo(RegisterUser model)
+        {
+            string imagename = model.ImageName;
+
+            // 如果沒有舊的 ImageName（可能表單沒傳回），從 Session 補上
+            if (string.IsNullOrEmpty(imagename) && Session["ImageName"] != null)
+            {
+                imagename = Session["ImageName"].ToString();
+            }
+
+            // 若上傳了新圖片才取代
+            if (Request.Files["ImageFile"] != null && Request.Files["ImageFile"].ContentLength > 0)
+            {
+                try
+                {
+                    var file = Request.Files["ImageFile"];
+                    string extension = Path.GetExtension(file.FileName).ToLower();
+                    string[] allowedExtensions = { ".jpg" };
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        TempData["Note"] = "只允許 JPG";
+                        return RedirectToAction("MemberInfo");
+                    }
+
+                    // 新圖取代舊圖
+                    imagename = Guid.NewGuid().ToString() + extension;
+                    string fpath = Path.Combine(Server.MapPath("~/Photo"), imagename);
+                    file.SaveAs(fpath);
+                }
+                catch (Exception ex)
+                {
+                    TempData["Note"] = "圖片上傳失敗：" + ex.Message;
+                    return RedirectToAction("MemberInfo");
+                }
+            }
+
+            try
+            {
+                X.Open();
+                string sql = @"UPDATE [Member] 
+                       SET RealName=@RealName, Phone=@Phone, Birthday=@Birthday,
+                           Height=@Height, Weight=@Weight, ImageName=@ImageName
+                       WHERE Account=@Account";
+
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Account", model.RegisterAccount);
+                cmd.Parameters.AddWithValue("@RealName", model.RegisterRealName ?? "");
+                cmd.Parameters.AddWithValue("@Phone", model.RegisterPhone ?? "");
+                cmd.Parameters.AddWithValue("@Birthday", model.RegisterBirthday ?? "");
+                cmd.Parameters.AddWithValue("@Height", model.RegisterHeight);
+                cmd.Parameters.AddWithValue("@Weight", model.RegisterWeight);
+                cmd.Parameters.AddWithValue("@ImageName", imagename); // ✅ 不用 DBNull.Value，永遠有值
+
+                int rows = cmd.ExecuteNonQuery();
+                Debug.WriteLine("更新筆數：" + rows);
+
+                // ✅ 同步更新 Session
+                Session["ImageName"] = imagename;
+                Session["RealName"] = model.RegisterRealName;
+
+                TempData["Note"] = "會員資料更新成功";
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("更新錯誤：" + ex.Message);
+                TempData["Note"] = "更新失敗：" + ex.Message;
+            }
+            finally
+            {
+                X.Close();
+            }
+
+            return RedirectToAction("MemberInfo");
+        }
+
+
 
         //會員資料
         public ActionResult MemberInfo()
@@ -145,20 +227,32 @@ namespace PetShop.Controllers
             string Result = FindUser(User);
             imagename = imagename.Trim();
 
+
+
             try
             {
                 if (Request.Files["imagename"] != null && Request.Files["imagename"].ContentLength > 0)
                 {
+                    string extension = Path.GetExtension(imagename).ToLower();
+
                     imagename = System.IO.Path.GetFileName(Request.Files["imagename"].FileName);
+                    
+
+                    // 只允許 JPG
+                    string[] allowedExtensions = { ".jpg"};
+
+                        imagename = Guid.NewGuid().ToString() + extension;
+                        string photoFolder = Server.MapPath("~/Photo");
+                        string fpath = Path.Combine(photoFolder, imagename);
+                        var file = Request.Files["imagename"];
+                        file.SaveAs(fpath);
+                        Debug.WriteLine("MMMMMM");
+                        
                 }
                 X.Open();
                 X.Close();
                 Result2 = "資料庫成功";
 
-                string photoFolder = Server.MapPath("~/Photo");
-                string fpath = Path.Combine(photoFolder, imagename);
-                var file = Request.Files["imagename"];
-                file.SaveAs(fpath);
             }
             catch (Exception e)
             {
@@ -679,7 +773,7 @@ namespace PetShop.Controllers
                         Password = reader["Password"].ToString(),
                         RealName = reader["RealName"].ToString(),
                         Phone = reader["Phone"].ToString(),
-                        Birthday = Convert.ToInt32(reader["Birthday"]),
+                        BirthDay = reader["BirthDay"].ToString(),
                         ResetToken = reader["ResetToken"] == DBNull.Value ? null : reader["ResetToken"].ToString(),
                         ResetTokenExpire = reader["ResetTokenExpire"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["ResetTokenExpire"])
                     };
