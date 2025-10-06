@@ -237,6 +237,9 @@
     <Content Include="Views\Home\ForgotPassword.cshtml" />
     <Content Include="Views\Home\ResetPassword.cshtml" />
     <Content Include="Views\Diary\PictogramArea.cshtml" />
+    <Content Include="Views\Diary\Analysis1Area.cshtml" />
+    <Content Include="Views\Diary\Analysis2Area.cshtml" />
+    <Content Include="Views\Diary\Analysis3Area.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

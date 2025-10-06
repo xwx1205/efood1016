@@ -1,0 +1,89 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "一周飲食統計";
+
+    var weekData = ViewBag.WeekData as Dictionary<string, string>;
+    var selectedDate = ViewBag.SelectedDate as string ?? DateTime.Now.ToString("yyyy-MM-dd");
+    var averageCalories = ViewBag.AverageCalories as double? ?? 0;
+    var nutrients = ViewBag.Nutrients as dynamic;
+}
+
+<!-- 方框 + 七天餐點資料 -->
+<div style="display: flex; height: 70vh;">
+    <!-- 左半邊：兩個方框 -->
+    <div style="flex: 1; padding: 30px; display: flex; flex-direction: column; align-items: flex-start;">
+        <h2 style="margin: 0 0 20px 0; align-self: flex-start;">一周飲食統計</h2>
+        <div style="display: flex; justify-content: space-between; flex: 1; width: 100%; max-width: calc(50vw - 60px); gap: 20px;">
+            <!-- 本週平均熱量 -->
+            <div style="flex: 1; border: 2px solid #ccc; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+                <h3 style="margin: 0 0 10px 0; font-size: 20px;">本週平均熱量</h3>
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 48px; font-weight: bold;">@averageCalories</span>
+                </div>
+                <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">kcal</div>
+            </div>
+            <!-- 本週總營養素 -->
+            <div style="flex: 1; border: 2px solid #ccc; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+                <h3 style="margin: 0 0 10px 0; font-size: 20px;">本週總營養素</h3>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 24px; font-weight: bold;">
+                    <span style="font-size: 48px; font-weight: bold;">0</span>
+                        <!-- <div>碳水化合物: @nutrients?.Carbs</div> -->
+                        <!-- <div>脂肪: @nutrients?.Fat</div> -->
+                        <!-- <div>蛋白質: @nutrients?.Protein</div> -->
+</div>
+                    <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">g</div>
+                </div>
+        </div>
+    </div>
+
+    <!-- 右半邊：七天紀錄 -->
+                    <div style="flex: 1; padding: 30px;">
+                        <!-- 頁面跳轉選單 -->
+                        <div style="margin-bottom: 20px;">
+                            <select id="pageSelect" style="font-size:18px; padding:5px;">
+                                <option value="">--- 請選擇頁面 ---</option>
+                                <option value="@Url.Action("Analysis1Index", "Home")" selected>一周飲食統計</option>
+                                <option value="@Url.Action("Analysis2Index", "Home")">每日熱量趨勢</option>
+                                <option value="@Url.Action("Analysis3Index", "Home")">營養比例分析</option>
+                            </select>
+                        </div>
+                        <!-- 日期選擇 -->
+                        <div style="margin-bottom: 20px;">
+                            <label>選擇日期：</label>
+                            <input type="date" id="analysisDate" value="@selectedDate" />
+                        </div>
+                        <h3>近七天餐點記錄</h3>
+                        <ul style="font-size: 18px; list-style: none; padding-left: 0;">
+                            @if (weekData != null && weekData.Count > 0)
+                            {
+                                foreach (var item in weekData)
+                                {
+                                    <li>@item.Key ：@item.Value</li>
+                                }
+                            }
+                            else
+                            {
+                                <li>尚無資料</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+
+<!-- JS區域 -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<script>
+    // 頁面跳轉
+    $('#pageSelect').change(function () {
+        var url = $(this).val();
+        if (url) window.location.href = url;
+    });
+
+    // 日期改變時自動跳轉
+    $('#analysisDate').change(function () {
+        var newDate = $(this).val();
+        if (newDate) {
+            window.location.href = '/Home/Analysis1Index?selectedDate=' + newDate;
+        }
+    });
+</script>
