@@ -16,6 +16,18 @@
                 <label>熱量</label>
                 <input type="number" name="Calories" class="form-control" value="@Model.Calories" />
             </div>
+            <div class="form-group">
+                <label>蛋白質</label>
+                <input type="number" name="Protein" class="form-control" value="@Model.Protein" />
+            </div>
+            <div class="form-group">
+                <label>脂肪</label>
+                <input type="number" name="Fat" class="form-control" value="@Model.Fat" />
+            </div>
+            <div class="form-group">
+                <label>碳水化合物</label>
+                <input type="number" name="Carbs" class="form-control" value="@Model.Carbs" />
+            </div>
             <button type="submit" class="btn btn-primary">儲存</button>
             <a href="@Url.Action("DiaryIndex", "Home")" class="btn btn-secondary">取消</a>
         </form>

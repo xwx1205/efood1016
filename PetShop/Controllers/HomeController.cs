@@ -392,9 +392,12 @@ namespace PetShop.Controllers
             else if (Request["Food"] == "其他" || Request["CommonFood"] == "其他")
                 food = Request["FoodOther"];
 
-            string caloriesStr = Request["Calories"];
             int calories = 0;
-            int.TryParse(caloriesStr, out calories);
+            int.TryParse(Request["Calories"], out calories);
+            decimal protein = 0, fat = 0, carbs = 0;
+            decimal.TryParse(Request["Protein"], out protein);
+            decimal.TryParse(Request["Fat"], out fat);
+            decimal.TryParse(Request["Carbs"], out carbs);
 
             string Response;
             try
@@ -402,11 +405,14 @@ namespace PetShop.Controllers
                 string account = Session["LoginUser"]?.ToString();
 
                 X.Open();
-                string G = "INSERT INTO Diary (Account, Food, Calories) VALUES (@Account, @Food, @Calories)";
+                string G = "INSERT INTO Diary (Account, Food, Calories, Protein, Fat, Carbs) VALUES (@Account, @Food, @Calories, @Protein, @Fat, @Carbs)";
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", account);
                 Q.Parameters.AddWithValue("@Food", food);
                 Q.Parameters.AddWithValue("@Calories", calories);
+                Q.Parameters.AddWithValue("@Protein", protein);
+                Q.Parameters.AddWithValue("@Fat", fat);
+                Q.Parameters.AddWithValue("@Carbs", carbs);
                 Q.ExecuteNonQuery();
                 Response = "建立成功";
             }
@@ -418,7 +424,6 @@ namespace PetShop.Controllers
             {
                 X.Close();
             }
-
             //TempData["Msg"] = Response;
             return RedirectToAction("DiaryIndex");
         }
@@ -434,7 +439,7 @@ namespace PetShop.Controllers
             {
                 X.Open();
                 // 取得日記
-                string G = "SELECT Id, CreateTime, Food, Calories FROM Diary WHERE Account = @Account";
+                string G = "SELECT Id, CreateTime, Food, Calories, Protein, Fat, Carbs FROM Diary WHERE Account = @Account";
                 if (!string.IsNullOrEmpty(date))
                 {
                     G += " AND CONVERT(date, CreateTime) = @SelectedDate";
@@ -459,12 +464,18 @@ namespace PetShop.Controllers
                     DateTime createTime = reader["CreateTime"] != DBNull.Value ? Convert.ToDateTime(reader["CreateTime"]) : DateTime.MinValue;
                     string food = reader["Food"] as string ?? "";
                     int calories = reader["Calories"] != DBNull.Value ? Convert.ToInt32(reader["Calories"]) : 0;
+                    int protein = reader["Protein"] != DBNull.Value ? Convert.ToInt32(reader["Protein"]) : 0;
+                    int fat = reader["Fat"] != DBNull.Value ? Convert.ToInt32(reader["Fat"]) : 0;
+                    int carbs = reader["Carbs"] != DBNull.Value ? Convert.ToInt32(reader["Carbs"]) : 0;
                     userDiaries.Add(new DiaryEntry
                     {
                         Id = id,
                         CreateTime = createTime,
                         Food = food,
-                        Calories = calories
+                        Calories = calories,
+                        Protein = protein,
+                        Fat = fat,
+                        Carbs = carbs
                     });
                 }
                 reader.Close();
@@ -551,10 +562,13 @@ namespace PetShop.Controllers
             try
             {
                 X.Open();
-                string sql = "UPDATE Diary SET Food=@Food, Calories=@Calories WHERE Id=@Id";
+                string sql = "UPDATE Diary SET Food=@Food, Calories=@Calories, Protein=@Protein, Fat=@Fat, Carbs=@Carbs WHERE Id=@Id";
                 SqlCommand cmd = new SqlCommand(sql, X);
                 cmd.Parameters.AddWithValue("@Food", entry.Food);
                 cmd.Parameters.AddWithValue("@Calories", entry.Calories);
+                cmd.Parameters.AddWithValue("@Protein", entry.Protein ?? 0);
+                cmd.Parameters.AddWithValue("@Fat", entry.Fat ?? 0);
+                cmd.Parameters.AddWithValue("@Carbs", entry.Carbs ?? 0);
                 cmd.Parameters.AddWithValue("@Id", entry.Id);
                 cmd.ExecuteNonQuery();
             }

@@ -108,65 +108,82 @@
         {
             <div class="alert alert-info">@TempData["Msg"]</div>
         }
-        <form method="post" action="/Home/DiaryArea">
-            <div class="form-group">
-                <label for="diaryContent">請選擇食材或常用食物：</label>
-                <br />
-            </div>
-            <select id="foodSelect" name="Food" onchange="onFoodSelectChange()">
-                <option value="">-- 請選擇食材 --</option>
-                @if (foodList != null)
-                {
-                    var groupedFoods = foodList.GroupBy(f => f.Category);
-                    foreach (var group in groupedFoods)
-                    {
-                        <optgroup label="@group.Key">
-                            @foreach (var food in group)
-                            {
-                                <option value="@food.Name"
-                                        data-calories="@food.Calories"
-                                        data-protein="@food.Protein"
-                                        data-fat="@food.Fat"
-                                        data-carb="@food.Carbs">
-                                    @food.Name
-                                </option>
-                            }
-                        </optgroup>
-                    }
-                }
-                <option value="其他" @(isOther ? "selected" : "")>其他</option>
-            </select>
-            <select id="commonSelect" name="CommonFood" onchange="onCommonSelectChange()">
-                <option value="">-- 請選擇食物 --</option>
-                @if (commonFoods != null)
-                {
-                    var groupedCommon = commonFoods.GroupBy(f => f.Category);
-                    foreach (var group in groupedCommon)
-                    {
-                        <optgroup label="@group.Key">
-                            @foreach (var common in group)
-                            {
-                                <option value="@common.Name"
-                                        data-calories="@common.Calories"
-                                        data-protein="@common.Protein"
-                                        data-fat="@common.Fat"
-                                        data-carb="@common.Carbs">
-                                    @common.Name
-                                </option>
-                            }
-                        </optgroup>
-                    }
-                }
-                <option value="其他" @(isOther ? "selected" : "")>其他</option>
-            </select>
+    <form method="post" action="/Home/DiaryArea">
+        <div class="form-group">
+            <label for="diaryContent">請選擇食材或常用食物：</label>
             <br />
-            <input type="text" id="foodOtherInput" name="FoodOther" class="form-control mt-2"
-                   style="display:none;" placeholder="請輸入食物名稱" />
-            <input type="number" id="caloriesInput" name="Calories" class="form-control mt-2"
-                   style="display:none;" placeholder="請輸入熱量" />
+        </div>
+        <select id="foodSelect" name="Food" onchange="onFoodSelectChange()">
+            <option value="">-- 請選擇食材 --</option>
+            @if (foodList != null)
+            {
+                var groupedFoods = foodList.GroupBy(f => f.Category);
+                foreach (var group in groupedFoods)
+                {
+                    <optgroup label="@group.Key">
+                        @foreach (var food in group)
+                        {
+                            <option value="@food.Name"
+                                    data-calories="@food.Calories"
+                                    data-protein="@food.Protein"
+                                    data-fat="@food.Fat"
+                                    data-carb="@food.Carbs">
+                                @food.Name
+                            </option>
+                        }
+                    </optgroup>
+                }
+            }
+            <option value="其他" @(isOther ? "selected" : "")>其他</option>
+        </select>
+        
+        <select id="commonSelect" name="CommonFood" onchange="onCommonSelectChange()">
+            <option value="">-- 請選擇食物 --</option>
+            @if (commonFoods != null)
+            {
+                var groupedCommon = commonFoods.GroupBy(f => f.Category);
+                foreach (var group in groupedCommon)
+                {
+                    <optgroup label="@group.Key">
+                        @foreach (var common in group)
+                        {
+                            <option value="@common.Name"
+                                    data-calories="@common.Calories"
+                                    data-protein="@common.Protein"
+                                    data-fat="@common.Fat"
+                                    data-carb="@common.Carbs">
+                                @common.Name
+                            </option>
+                        }
+                    </optgroup>
+                }
+            }
+            <option value="其他" @(isOther ? "selected" : "")>其他</option>
+        </select>
+
+        <br />
+        <input type="text" id="foodOtherInput" name="FoodOther" class="form-control mt-2"
+               style="display:none;" placeholder="請輸入食物名稱" />
+        @*<input type="number" id="caloriesInput" name="Calories" class="form-control mt-2"
+        style="display:none;" placeholder="請輸入熱量" />*@
+        <label>數量</label>
+        <input type="number" id="foodQty" name="FoodQty" class="form-control d-inline-block" value="1" min="1" style="width:80px;" onchange="updateNutrition()">
+        <br />
+        <div id="nutritionInputs" class="mt-2">
+            <label>熱量</label>
+            <input type="number" id="caloriesInput" name="Calories" class="form-control d-inline-block" style="width:100px;" value="0">
             <br />
-            <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
-        </form>
+            <label>蛋白質</label>
+            <input type="number" id="proteinInput" name="Protein" class="form-control d-inline-block" style="width:100px;" value="0">
+            <br />
+            <label>脂肪</label>
+            <input type="number" id="fatInput" name="Fat" class="form-control d-inline-block" style="width:100px;" value="0">
+            <br />
+            <label>碳水化合物</label>
+            <input type="number" id="carbInput" name="Carbs" class="form-control d-inline-block" style="width:100px;" value="0">
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
+    </form>
     </div>
 </div>
 <script>
@@ -218,42 +235,26 @@
     function onFoodSelectChange() {
         var foodSelect = document.getElementById('foodSelect');
         var foodOtherInput = document.getElementById('foodOtherInput');
-        var caloriesInput = document.getElementById('caloriesInput');
         var selected = foodSelect.options[foodSelect.selectedIndex];
-        var calories = selected.getAttribute('data-calories');
         if (foodSelect.value === "其他") {
             foodOtherInput.style.display = '';
             foodOtherInput.required = true;
-            caloriesInput.style.display = '';
-            caloriesInput.required = true;
-            caloriesInput.value = '';
         } else {
             foodOtherInput.style.display = 'none';
             foodOtherInput.required = false;
-            caloriesInput.style.display = 'none';
-            caloriesInput.required = false;
-            if (calories) caloriesInput.value = calories;
         }
     }
 
     function onCommonSelectChange() {
         var commonSelect = document.getElementById('commonSelect');
         var foodOtherInput = document.getElementById('foodOtherInput');
-        var caloriesInput = document.getElementById('caloriesInput');
         var selected = commonSelect.options[commonSelect.selectedIndex];
-        var calories = selected.getAttribute('data-calories');
         if (commonSelect.value === "其他") {
             foodOtherInput.style.display = '';
             foodOtherInput.required = true;
-            caloriesInput.style.display = '';
-            caloriesInput.required = true;
-            caloriesInput.value = '';
         } else {
             foodOtherInput.style.display = 'none';
             foodOtherInput.required = false;
-            caloriesInput.style.display = 'none';
-            caloriesInput.required = false;
-            if (calories) caloriesInput.value = calories;
         }
     }
 
@@ -262,6 +263,9 @@
         var calories = selected.getAttribute('data-calories');
         if (calories && selected.value !== "其他") {
             document.getElementById('caloriesInput').value = calories;
+            document.getElementById('proteinInput').value = protein;
+            document.getElementById('fatInput').value = fat;
+            document.getElementById('carbInput').value = carb;
         }
     });
 
@@ -270,6 +274,9 @@
         var calories = selected.getAttribute('data-calories');
         if (calories && calories !== "其他") {
             document.getElementById('caloriesInput').value = calories;
+            document.getElementById('proteinInput').value = protein;
+            document.getElementById('fatInput').value = fat;
+            document.getElementById('carbInput').value = carb;
         }
     });
 
@@ -290,4 +297,30 @@
                 }
             });
     }
+
+    function updateNutrition() {
+        // 取得選擇的食材
+        var select = document.getElementById('foodSelect');
+        var qty = parseInt(document.getElementById('foodQty').value) || 1;
+        var selected = select.options[select.selectedIndex];
+
+        var calories = parseFloat(selected.getAttribute('data-calories')) || 0;
+        var protein = parseFloat(selected.getAttribute('data-protein')) || 0;
+        var fat = parseFloat(selected.getAttribute('data-fat')) || 0;
+        var carb = parseFloat(selected.getAttribute('data-carb')) || 0;
+
+        // 乘上數量
+        document.getElementById('caloriesInput').value = calories * qty;
+        document.getElementById('proteinInput').value = protein * qty;
+        document.getElementById('fatInput').value = fat * qty;
+        document.getElementById('carbInput').value = carb * qty;
+
+        // 若要送到後端，可將結果填入隱藏欄位
+        document.getElementById('caloriesInput').value = totalCalories;
+        // 其他營養成分也可用隱藏欄位傳送
+    }
+
+    // 初始化
+    document.getElementById('foodSelect').addEventListener('change', updateNutritionInputs);
+    document.getElementById('foodQty').addEventListener('change', updateNutritionInputs);
 </script>
