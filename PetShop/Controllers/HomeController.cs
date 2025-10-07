@@ -227,27 +227,24 @@ namespace PetShop.Controllers
             string Result = FindUser(User);
             imagename = imagename.Trim();
 
-
-
             try
             {
                 if (Request.Files["imagename"] != null && Request.Files["imagename"].ContentLength > 0)
                 {
-                    string extension = Path.GetExtension(imagename).ToLower();
+                    var file = Request.Files["imagename"];
+                    string extension = Path.GetExtension(file.FileName).ToLower();
 
-                    imagename = System.IO.Path.GetFileName(Request.Files["imagename"].FileName);
-                    
+                    string[] allowedExtensions = { ".jpg" };
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        TempData["Note"] = "只允許上傳 JPG 檔案";
+                        return RedirectToAction("LoginRegister");
+                    }
 
-                    // 只允許 JPG
-                    string[] allowedExtensions = { ".jpg"};
-
-                        imagename = Guid.NewGuid().ToString() + extension;
-                        string photoFolder = Server.MapPath("~/Photo");
-                        string fpath = Path.Combine(photoFolder, imagename);
-                        var file = Request.Files["imagename"];
-                        file.SaveAs(fpath);
-                        Debug.WriteLine("MMMMMM");
-                        
+                    imagename = Guid.NewGuid().ToString() + extension;
+                    string photoFolder = Server.MapPath("~/Photo");
+                    string fpath = Path.Combine(photoFolder, imagename);
+                    file.SaveAs(fpath);
                 }
                 X.Open();
                 X.Close();
