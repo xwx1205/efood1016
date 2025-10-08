@@ -14,14 +14,11 @@ namespace PetShop.Controllers
 {
     public class HomeController : Controller
     {
-        
-        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\yisiu\source\repos\efood-4\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
+        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\efood\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
         public MyDbContext db = new MyDbContext();
         public string Result2 { get; set; }
-
         //修改會員資料
         [HttpPost]
-
         public ActionResult UpdateMemberInfo(RegisterUser model)
         {
             string imagename = model.ImageName;
@@ -96,9 +93,6 @@ namespace PetShop.Controllers
 
             return RedirectToAction("MemberInfo");
         }
-
-
-
         //會員資料
         public ActionResult MemberInfo()
         {
@@ -327,17 +321,9 @@ namespace PetShop.Controllers
                         X.Close();
                     }
 
-                    // 設定 Session & ViewBag
                     ViewBag.Account = User;
                     Session["LoginUser"] = User;
 
-                    //Session["RealName"] = member.RegisterRealName;
-
-                    //if (member != null)
-                    //{
-                    //    ViewBag.ImageName = member.ImageName;
-                    //    Session["ImageName"] = member.ImageName;
-                    //}
                     if (member != null)
                     {
                         Session["RealName"] = member.RegisterRealName;
@@ -402,7 +388,6 @@ namespace PetShop.Controllers
             try
             {
                 string account = Session["LoginUser"]?.ToString();
-
                 X.Open();
                 string G = "INSERT INTO Diary (Account, Food, Calories, Protein, Fat, Carbs, MealType) VALUES (@Account, @Food, @Calories, @Protein, @Fat, @Carbs, @MealType)";
 
@@ -410,11 +395,9 @@ namespace PetShop.Controllers
                 Q.Parameters.AddWithValue("@Account", account);
                 Q.Parameters.AddWithValue("@Food", food);
                 Q.Parameters.AddWithValue("@Calories", calories);
-
                 Q.Parameters.AddWithValue("@Protein", protein);
                 Q.Parameters.AddWithValue("@Fat", fat);
                 Q.Parameters.AddWithValue("@Carbs", carbs);
-
                 Q.Parameters.AddWithValue("@MealType", MealType);
 
                 Q.ExecuteNonQuery();
@@ -431,7 +414,6 @@ namespace PetShop.Controllers
             //TempData["Msg"] = Response;
             return RedirectToAction("DiaryIndex");
         }
-
         public ActionResult DiaryIndex(string date)
         {
             DateTime selectedDate;
@@ -447,8 +429,6 @@ namespace PetShop.Controllers
                             .OrderByDescending(e => e.CreateTime)
                             .ToList();
 
-            ViewBag.SelectedDate = selectedDate.ToString("yyyy-MM-dd");
-            
             string account = Session["LoginUser"]?.ToString();
             List<DiaryEntry> userDiaries = new List<DiaryEntry>();
             List<Food> foodList = new List<Food>();
@@ -476,24 +456,6 @@ namespace PetShop.Controllers
                     Q.Parameters.AddWithValue("@NextDay", selectedDate.AddDays(1));
                 }
 
-                // 取得日記
-                //string G = "SELECT Id, CreateTime, Food, Calories , MealType FROM Diary WHERE Account = @Account";
-                //if (!string.IsNullOrEmpty(date))
-                //{
-                //    G += " AND CONVERT(date, CreateTime) = @SelectedDate";
-                //}
-                //G += " ORDER BY CreateTime DESC";
-
-                //SqlCommand Q = new SqlCommand(G, X);
-                //Q.Parameters.AddWithValue("@Account", account);
-                ////if (!string.IsNullOrEmpty(date))
-                ////{
-                //    //DateTime selectedDate;
-                //    //if (DateTime.TryParse(date, out selectedDate))
-                //    //{
-                //        Q.Parameters.AddWithValue("@SelectedDate", selectedDate.Date);
-                //    //}
-                ////}
                 SqlDataReader reader = Q.ExecuteReader();
 
                 while (reader.Read())
@@ -529,7 +491,7 @@ namespace PetShop.Controllers
                     foodList.Add(new Food
                     {
                         Name = foodReader["Name"].ToString(),
-                        Category= foodReader["Category"].ToString(),
+                        Category = foodReader["Category"].ToString(),
                         Calories = Convert.ToInt32(foodReader["Calories"]),
                         Protein = Convert.ToInt32(foodReader["Protein"]),
                         Fat = Convert.ToInt32(foodReader["Fat"]),
@@ -563,13 +525,10 @@ namespace PetShop.Controllers
             ViewBag.Account = account;
             ViewBag.UserDiaries = userDiaries;
             ViewBag.SelectedDate = selectedDate.ToString("yyyy-MM-dd");
-
             ViewBag.FoodList = foodList;
             ViewBag.CommonFoods = commonFoods;
             return View("~/Views/Diary/DiaryArea.cshtml");
         }
-
-
         // 取得單筆日記
         public ActionResult EditDiary(int id)
         {
@@ -594,9 +553,8 @@ namespace PetShop.Controllers
                 reader.Close();
             }
             finally { X.Close(); }
-            return View("~/Views/Diary/EditDiary.cshtml",entry);
+            return View("~/Views/Diary/EditDiary.cshtml", entry);
         }
-
         // 修改日記
         [HttpPost]
         public ActionResult EditDiary(DiaryEntry entry)
@@ -617,8 +575,6 @@ namespace PetShop.Controllers
             finally { X.Close(); }
             return RedirectToAction("DiaryIndex");
         }
-
-        // 刪除日記
         [HttpPost]
         public JsonResult DeleteDiary(int id)
         {
@@ -635,7 +591,6 @@ namespace PetShop.Controllers
             finally { X.Close(); }
             return Json(new { success });
         }
-
         [HttpPost]
         public JsonResult Check(int count)
         {
@@ -675,7 +630,6 @@ namespace PetShop.Controllers
             };
             return Json(result, JsonRequestBehavior.AllowGet);
         }
-
         [HttpPost]
         public JsonResult SaveMealChoice(string mealType, string selectedOption, string date)
         {
@@ -708,7 +662,6 @@ namespace PetShop.Controllers
                 X.Close();
             }
         }
-
         public ActionResult MealHistory()
         {
             string account = Session["LoginUser"]?.ToString();
@@ -737,12 +690,10 @@ namespace PetShop.Controllers
             ViewBag.Meals = meals;
             return View("~/Views/Diary/MealArea.cshtml");
         }
-
         public JsonResult Invoice()
         {
             String P = "Vote Success";
             var candidates = new List<object>();
-
 
             try
             {
@@ -764,10 +715,8 @@ namespace PetShop.Controllers
             }
             catch (Exception) { }
             finally { X.Close(); }
-
             return Json(new { P, Q = candidates }, JsonRequestBehavior.AllowGet);
         }
-
         public JsonResult GetAllMealRecords()
         {
             string account = Session["LoginUser"]?.ToString();
@@ -801,7 +750,6 @@ namespace PetShop.Controllers
             {
                 X.Close();
             }
-
             return Json(new { success = true, data = meals }, JsonRequestBehavior.AllowGet);
         }
         public ActionResult PictogramIndex()
@@ -810,7 +758,6 @@ namespace PetShop.Controllers
             ViewBag.Account = account;
             return View("~/Views/Diary/PictogramArea.cshtml");
         }
-
         public ActionResult Analysis1Index(string selectedDate)
         {
             string account = Session["LoginUser"]?.ToString();
@@ -944,7 +891,6 @@ namespace PetShop.Controllers
             ViewBag.Account = account;
             return View("~/Views/Diary/Analysis3Area.cshtml");
         }
-
         public ActionResult MealIndex(string date)
         {
             string account = Session["LoginUser"]?.ToString();
@@ -1000,38 +946,31 @@ namespace PetShop.Controllers
 
             return View("~/Views/Diary/MealArea.cshtml");
         }
-
-
-        //public ActionResult Index()
-        //{
-        //    ViewBag.Account = Session["LoginUser"];
-        //    return View();
-        //}
-        // GET: /Home/Index?date=2025-10-06
-        public ActionResult Index(string date)
+        public ActionResult Index()
         {
-            DateTime selectedDate;
-            if (!DateTime.TryParse(date, out selectedDate))
-            {
-                selectedDate = DateTime.Today;
-            }
-
-            // 篩選同一天的紀錄（不管時間）
-        //var entries = db.DiaryEntries
-        //.Where(e => DbFunctions.TruncateTime(e.CreateTime) == selectedDate.Date)
-        //.OrderByDescending(e => e.CreateTime)
-        //.ToList();
-
+            ViewBag.Account = Session["LoginUser"];
             return View();
         }
+        //public ActionResult Index(string date)
+        //{
+        //    DateTime selectedDate;
+        //    if (!DateTime.TryParse(date, out selectedDate))
+        //    {
+        //        selectedDate = DateTime.Today;
+        //    }
 
+        //    // 篩選同一天的紀錄（不管時間）
+        //    //var entries = db.DiaryEntries
+        //    //.Where(e => DbFunctions.TruncateTime(e.CreateTime) == selectedDate.Date)
+        //    //.OrderByDescending(e => e.CreateTime)
+        //    //.ToList();
 
-
+        //    return View();
+        //}
         public ActionResult ForgotPassword()
         {
             return View();
         }
-
         public Member FindMember(string account)
         {
             Member user = null;
@@ -1067,7 +1006,6 @@ namespace PetShop.Controllers
             }
             return user;
         }
-
         [HttpPost]
         public ActionResult SendResetLink(string account)
         {
@@ -1115,7 +1053,6 @@ namespace PetShop.Controllers
             // 實際環境應用 Email 寄送，這裡先用 TempData 模擬
             return RedirectToAction("ResetPassword", new { token = token });
         }
-
         public ActionResult ResetPassword(string token)
         {
             Debug.WriteLine("收到的 token: " + token);
@@ -1148,7 +1085,6 @@ namespace PetShop.Controllers
             ViewBag.Token = token;
             return View();
         }
-
         [HttpPost]
         public ActionResult ResetPassword(string token, string newPassword, string confirmPassword)
         {
