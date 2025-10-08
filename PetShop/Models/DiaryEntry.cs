@@ -11,6 +11,9 @@ namespace PetShop.Models
         public decimal? Fat {  get; set; }
         public decimal? Carbs {  get; set; }
         public DateTime CreateTime { get; set; }
+        public string MealType { get; set; }
+
+
     }
 
 }

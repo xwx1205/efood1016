@@ -1,10 +1,13 @@
 ﻿@{
     Layout = "~/Views/Shared/_Layout.cshtml";
     var entries = ViewBag.UserDiaries as List<PetShop.Models.DiaryEntry>;
-    var selectedDate = ViewBag.SelectedDate as string;
+ 
+    //var selectedDate = ViewBag.SelectedDate as string;
     var foodList = ViewBag.FoodList as List<PetShop.Models.Food>;
     var commonFoods = ViewBag.CommonFoods as List<PetShop.Models.CommonFood>;
     bool isOther = false;
+    string selectedDate = Request.QueryString["date"];
+    var diaryDate = !string.IsNullOrEmpty(selectedDate) ? selectedDate : DateTime.Today.ToString("yyyy-MM-dd");
 }
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -53,11 +56,14 @@
 <h2 class="page-title">📔 飲食紀錄</h2>
 <div class="page-wrapper" style="flex:1; max-width:1000px;">
     <div class="container mt-5">
-        <!-- 歷史日記顯示 -->
-        <form method="get" action="/Home/DiaryIndex" class="mb-3">
+        <!-- 歷史日記顯示(左側) -->
+        <form method="get" action="@Url.Action("Index", "Home")" class="mb-3">
             <label for="searchDate">🔍 選擇日期查看紀錄：</label>
+            @*<input type="date" id="searchDate" name="date" class="form-control"
+        value="@Request.QueryString["date"]" onchange="this.form.submit()" />*@
             <input type="date" id="searchDate" name="date" class="form-control"
-                   value="@Request.QueryString["date"]" onchange="this.form.submit()" />
+                   value="@diaryDate" onchange="this.form.submit()" />
+
         </form>
 
         <h4 class="mb-3">
@@ -86,6 +92,7 @@
                                 @if (!string.IsNullOrWhiteSpace(entry.Food))
                                 {
                                     <div><strong>食物：</strong>@entry.Food</div>
+                                    <div><strong>餐別：</strong>@entry.MealType</div>
                                     <div><strong>熱量：</strong>@entry.Calories kcal</div>
                                 }
                             </div>
@@ -101,16 +108,85 @@
             }
         </div>
     </div>
-    <!-- 日記輸入表單 -->
+    <!-- 日記輸入表單(右側) -->
     <div class="container mt-5 diary-form-wrapper" style="max-width:400px;">
         <!-- 成功/失敗訊息 -->
         @if (TempData["Msg"] != null)
         {
             <div class="alert alert-info">@TempData["Msg"]</div>
         }
+<<<<<<< Updated upstream
     <form method="post" action="/Home/DiaryArea">
         <div class="form-group">
             <label for="diaryContent">請選擇食材或常用食物：</label>
+=======
+        @*<form method="post" action="/Home/DiaryArea">*@
+        <form id="dateForm" method="post" action="/Home/DiaryAreaWithDate">
+            <label for="DiaryDate">飲食時間：</label>
+            <input type="datetime-local" id="selectedDateTime" name="selectedDateTime"
+                   value="@ViewBag.DiaryDate" />            
+            <div class="form-group">
+                <label for="diaryContent">請選擇食材或常用食物：</label>
+                <br />
+            </div>
+            <select id="foodSelect" name="Food" onchange="onFoodSelectChange()">
+                <option value="">-- 請選擇食材 --</option>
+                @if (foodList != null)
+                {
+                    var groupedFoods = foodList.GroupBy(f => f.Category);
+                    foreach (var group in groupedFoods)
+                    {
+                        <optgroup label="@group.Key">
+                            @foreach (var food in group)
+                            {
+                                <option value="@food.Name"
+                                        data-calories="@food.Calories"
+                                        data-protein="@food.Protein"
+                                        data-fat="@food.Fat"
+                                        data-carb="@food.Carbs">
+                                    @food.Name
+                                </option>
+                            }
+                        </optgroup>
+                    }
+                }
+                <option value="其他" @(isOther ? "selected" : "")>其他</option>
+            </select>
+
+            <select id="commonSelect" name="CommonFood" onchange="onCommonSelectChange()">
+                <option value="">-- 請選擇食物 --</option>
+                @if (commonFoods != null)
+                {
+                    var groupedCommon = commonFoods.GroupBy(f => f.Category);
+                    foreach (var group in groupedCommon)
+                    {
+                        <optgroup label="@group.Key">
+                            @foreach (var common in group)
+                            {
+                                <option value="@common.Name"
+                                        data-calories="@common.Calories"
+                                        data-protein="@common.Protein"
+                                        data-fat="@common.Fat"
+                                        data-carb="@common.Carbs">
+                                    @common.Name
+                                </option>
+                            }
+                        </optgroup>
+                    }
+                }
+                <option value="其他" @(isOther ? "selected" : "")>其他</option>
+            </select>
+            <div class="form-group mt-2">
+                <label for="MealType">用餐類別：</label>
+                <select id="MealType" name="MealType" class="form-control">
+                    <option value="">-- 請選擇餐別 --</option>
+                    <option value="早餐">早餐</option>
+                    <option value="午餐">午餐</option>
+                    <option value="晚餐">晚餐</option>
+                    <option value="點心">點心</option>
+                </select>
+            </div>
+>>>>>>> Stashed changes
             <br />
         </div>
         <select id="foodSelect" name="Food" onchange="onFoodSelectChange()">
@@ -186,6 +262,7 @@
     </form>
     </div>
 </div>
+
 <script>
     //var ctx = document.getElementById("MyCanvas").getContext("2d");
     //var MyData = {
@@ -231,7 +308,7 @@
     //        document.getElementById("foodName").value = "";
     //    }
     //}
-
+  
     function onFoodSelectChange() {
         var foodSelect = document.getElementById('foodSelect');
         var foodOtherInput = document.getElementById('foodOtherInput');

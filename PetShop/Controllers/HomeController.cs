@@ -1,6 +1,7 @@
 ﻿using PetShop.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
@@ -13,7 +14,8 @@ namespace PetShop.Controllers
 {
     public class HomeController : Controller
     {
-        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\efood\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
+        
+        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\yisiu\source\repos\efood-4\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
         public MyDbContext db = new MyDbContext();
         public string Result2 { get; set; }
 
@@ -381,6 +383,7 @@ namespace PetShop.Controllers
         [HttpPost]
         public ActionResult DiaryArea()
         {
+            string MealType = Request["MealType"]?.ToString();
             string food = "";
             if (!string.IsNullOrEmpty(Request["Food"]) && Request["Food"] != "其他")
                 food = Request["Food"];
@@ -388,7 +391,6 @@ namespace PetShop.Controllers
                 food = Request["CommonFood"];
             else if (Request["Food"] == "其他" || Request["CommonFood"] == "其他")
                 food = Request["FoodOther"];
-
             int calories = 0;
             int.TryParse(Request["Calories"], out calories);
             decimal protein = 0, fat = 0, carbs = 0;
@@ -402,14 +404,19 @@ namespace PetShop.Controllers
                 string account = Session["LoginUser"]?.ToString();
 
                 X.Open();
-                string G = "INSERT INTO Diary (Account, Food, Calories, Protein, Fat, Carbs) VALUES (@Account, @Food, @Calories, @Protein, @Fat, @Carbs)";
+                string G = "INSERT INTO Diary (Account, Food, Calories, Protein, Fat, Carbs, MealType) VALUES (@Account, @Food, @Calories, @Protein, @Fat, @Carbs, @MealType)";
+
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", account);
                 Q.Parameters.AddWithValue("@Food", food);
                 Q.Parameters.AddWithValue("@Calories", calories);
+
                 Q.Parameters.AddWithValue("@Protein", protein);
                 Q.Parameters.AddWithValue("@Fat", fat);
                 Q.Parameters.AddWithValue("@Carbs", carbs);
+
+                Q.Parameters.AddWithValue("@MealType", MealType);
+
                 Q.ExecuteNonQuery();
                 Response = "建立成功";
             }
@@ -427,6 +434,21 @@ namespace PetShop.Controllers
 
         public ActionResult DiaryIndex(string date)
         {
+            DateTime selectedDate;
+            if (!DateTime.TryParse(date, out selectedDate))
+            {
+                selectedDate = DateTime.Today;
+            }
+            DateTime nextDay = selectedDate.AddDays(1); // 取得隔天
+
+            // 用範圍比對，不用 .Date
+            var entries = db.DiaryEntries
+                            .Where(e => e.CreateTime >= selectedDate && e.CreateTime < nextDay)
+                            .OrderByDescending(e => e.CreateTime)
+                            .ToList();
+
+            ViewBag.SelectedDate = selectedDate.ToString("yyyy-MM-dd");
+            
             string account = Session["LoginUser"]?.ToString();
             List<DiaryEntry> userDiaries = new List<DiaryEntry>();
             List<Food> foodList = new List<Food>();
@@ -436,23 +458,42 @@ namespace PetShop.Controllers
             {
                 X.Open();
                 // 取得日記
-                string G = "SELECT Id, CreateTime, Food, Calories, Protein, Fat, Carbs FROM Diary WHERE Account = @Account";
+                string G = "SELECT Id, CreateTime, Food, Calories, Protein, Fat, Carbs, MealType FROM Diary WHERE Account = @Account";
+
                 if (!string.IsNullOrEmpty(date))
                 {
-                    G += " AND CONVERT(date, CreateTime) = @SelectedDate";
+                    G += " AND CreateTime >= @SelectedDate AND CreateTime < @NextDay";
                 }
+
                 G += " ORDER BY CreateTime DESC";
 
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", account);
+
                 if (!string.IsNullOrEmpty(date))
                 {
-                    DateTime selectedDate;
-                    if (DateTime.TryParse(date, out selectedDate))
-                    {
-                        Q.Parameters.AddWithValue("@SelectedDate", selectedDate.Date);
-                    }
+                    Q.Parameters.AddWithValue("@SelectedDate", selectedDate);
+                    Q.Parameters.AddWithValue("@NextDay", selectedDate.AddDays(1));
                 }
+
+                // 取得日記
+                //string G = "SELECT Id, CreateTime, Food, Calories , MealType FROM Diary WHERE Account = @Account";
+                //if (!string.IsNullOrEmpty(date))
+                //{
+                //    G += " AND CONVERT(date, CreateTime) = @SelectedDate";
+                //}
+                //G += " ORDER BY CreateTime DESC";
+
+                //SqlCommand Q = new SqlCommand(G, X);
+                //Q.Parameters.AddWithValue("@Account", account);
+                ////if (!string.IsNullOrEmpty(date))
+                ////{
+                //    //DateTime selectedDate;
+                //    //if (DateTime.TryParse(date, out selectedDate))
+                //    //{
+                //        Q.Parameters.AddWithValue("@SelectedDate", selectedDate.Date);
+                //    //}
+                ////}
                 SqlDataReader reader = Q.ExecuteReader();
 
                 while (reader.Read())
@@ -472,7 +513,9 @@ namespace PetShop.Controllers
                         Calories = calories,
                         Protein = protein,
                         Fat = fat,
-                        Carbs = carbs
+                        Carbs = carbs,
+                        MealType = reader["MealType"] != DBNull.Value ? reader["MealType"].ToString() : ""
+
                     });
                 }
                 reader.Close();
@@ -519,11 +562,13 @@ namespace PetShop.Controllers
             }
             ViewBag.Account = account;
             ViewBag.UserDiaries = userDiaries;
-            ViewBag.SelectedDate = date;
+            ViewBag.SelectedDate = selectedDate.ToString("yyyy-MM-dd");
+
             ViewBag.FoodList = foodList;
             ViewBag.CommonFoods = commonFoods;
             return View("~/Views/Diary/DiaryArea.cshtml");
         }
+
 
         // 取得單筆日記
         public ActionResult EditDiary(int id)
@@ -759,7 +804,6 @@ namespace PetShop.Controllers
 
             return Json(new { success = true, data = meals }, JsonRequestBehavior.AllowGet);
         }
-
         public ActionResult PictogramIndex()
         {
             string account = Session["LoginUser"]?.ToString();
@@ -958,11 +1002,30 @@ namespace PetShop.Controllers
         }
 
 
-        public ActionResult Index()
+        //public ActionResult Index()
+        //{
+        //    ViewBag.Account = Session["LoginUser"];
+        //    return View();
+        //}
+        // GET: /Home/Index?date=2025-10-06
+        public ActionResult Index(string date)
         {
-            ViewBag.Account = Session["LoginUser"];
+            DateTime selectedDate;
+            if (!DateTime.TryParse(date, out selectedDate))
+            {
+                selectedDate = DateTime.Today;
+            }
+
+            // 篩選同一天的紀錄（不管時間）
+        //var entries = db.DiaryEntries
+        //.Where(e => DbFunctions.TruncateTime(e.CreateTime) == selectedDate.Date)
+        //.OrderByDescending(e => e.CreateTime)
+        //.ToList();
+
             return View();
         }
+
+
 
         public ActionResult ForgotPassword()
         {
