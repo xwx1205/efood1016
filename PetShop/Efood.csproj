@@ -199,6 +199,12 @@
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
     <Content Include="Image\food.png" />
+    <Content Include="Image\目標設定.png" />
+    <Content Include="Image\目標設定icon.png" />
+    <Content Include="Image\飲食分析.png" />
+    <Content Include="Image\飲食分析icon.png" />
+    <Content Include="Image\飲食紀錄.png" />
+    <Content Include="Image\飲食紀錄icon.png" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
