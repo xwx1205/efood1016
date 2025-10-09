@@ -50,8 +50,8 @@
     .diary-form-wrapper {
         flex: none; /* 固定高度，不隨內容增長 */
         width: 100%;
-
     }
+
     .menu-icon {
         width: 65px; /* 可依需求調整 */
         height: 65px;
@@ -69,7 +69,6 @@
         display: flex;
         justify-content: center;
     }
-
 </style>
 
 <div class="card">
@@ -77,157 +76,157 @@
     <h2 class="page-title"> 飲食紀錄</h2>
 </div>
 
-    <div class="page-wrapper" style="flex:1; max-width:1000px;">
-        <!-- 歷史日記顯示(左側) -->
-        <div class="container mt-5">
-            <form method="get" action="/Home/DiaryIndex" class="mb-3">
-                <label for="searchDate">🔍 選擇日期查看紀錄：</label>
-                @*<input type="date" id="searchDate" name="date" class="form-control"
-                    value="@Request.QueryString["date"]" onchange="this.form.submit()" />*@
-                <input type="date" id="searchDate" name="date" class="form-control"
-                       value="@diaryDate" onchange="this.form.submit()" />
+<div class="page-wrapper" style="flex:1; max-width:1000px;">
+    <!-- 歷史日記顯示(左側) -->
+    <div class="container mt-5">
+        <form method="get" action="/Home/DiaryIndex" class="mb-3">
+            <label for="searchDate">🔍 選擇日期查看紀錄：</label>
+            @*<input type="date" id="searchDate" name="date" class="form-control"
+                value="@Request.QueryString["date"]" onchange="this.form.submit()" />*@
+            <input type="date" id="searchDate" name="date" class="form-control"
+                   value="@diaryDate" onchange="this.form.submit()" />
 
-            </form>
+        </form>
 
-            <h4 class="mb-3">
-                🕒
-                @if (!string.IsNullOrEmpty(selectedDate))
-                {
-                    <text>@selectedDate 的日記紀錄：</text>
-                }
-                else
-                {
-                    <text>所有日記紀錄：</text>
-                }
-            </h4>
-            <div class="diary-list-wrapper">
-                @if (entries != null && entries.Count > 0)
-                {
-                    <ul class="list-group">
-                        @foreach (var entry in entries)
-                        {
-                            <li class="list-group-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">@entry.CreateTime.ToString("yyyy-MM-dd HH:mm")</span>
-                                    <span class="badge badge-secondary">日記</span>
-                                </div>
-                                <div class="mt-2">
-                                    @if (!string.IsNullOrWhiteSpace(entry.Food))
-                                    {
-                                        <div><strong>食物：</strong>@entry.Food</div>
-                                        <div><strong>餐別：</strong>@entry.MealType</div>
-                                        <div><strong>熱量：</strong>@entry.Calories kcal</div>
-                                    }
-                                </div>
-                                <button type="button" class="btn btn-danger btn-sm" onclick="deleteDiary(@entry.Id, this)">刪除</button>
-                                <a href="@Url.Action("EditDiary", "Home", new { id = entry.Id })" class="btn btn-warning btn-sm">修改</a>
-                            </li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <div class="alert alert-secondary">尚無日記紀錄。</div>
-                }
-            </div>
-        </div>
-        <!-- 日記輸入表單(右側) -->
-        <div class="container mt-5 diary-form-wrapper" style="max-width:400px;">
-            <!-- 成功/失敗訊息 -->
-            @if (TempData["Msg"] != null)
+        <h4 class="mb-3">
+            🕒
+            @if (!string.IsNullOrEmpty(selectedDate))
             {
-                <div class="alert alert-info">@TempData["Msg"]</div>
+                <text>@selectedDate 的日記紀錄：</text>
             }
+            else
+            {
+                <text>所有日記紀錄：</text>
+            }
+        </h4>
+        <div class="diary-list-wrapper">
+            @if (entries != null && entries.Count > 0)
+            {
+                <ul class="list-group">
+                    @foreach (var entry in entries)
+                    {
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">@entry.CreateTime.ToString("yyyy-MM-dd HH:mm")</span>
+                                <span class="badge badge-secondary">日記</span>
+                            </div>
+                            <div class="mt-2">
+                                @if (!string.IsNullOrWhiteSpace(entry.Food))
+                                {
+                                    <div><strong>食物：</strong>@entry.Food</div>
+                                    <div><strong>餐別：</strong>@entry.MealType</div>
+                                    <div><strong>熱量：</strong>@entry.Calories kcal</div>
+                                }
+                            </div>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="deleteDiary(@entry.Id, this)">刪除</button>
+                            <a href="@Url.Action("EditDiary", "Home", new { id = entry.Id })" class="btn btn-warning btn-sm">修改</a>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="alert alert-secondary">尚無日記紀錄。</div>
+            }
+        </div>
+    </div>
+    <!-- 日記輸入表單(右側) -->
+    <div class="container mt-5 diary-form-wrapper" style="max-width:400px;">
+        <!-- 成功/失敗訊息 -->
+        @if (TempData["Msg"] != null)
+        {
+            <div class="alert alert-info">@TempData["Msg"]</div>
+        }
 
-            <div class="form-group">
-                <label for="diaryContent">請選擇食材或常用食物：</label>
+        <div class="form-group">
+            <label for="diaryContent">請選擇食材或常用食物：</label>
 
-                <form id="dateForm" method="post" action="/Home/DiaryArea">
-                    <label for="DiaryDate">飲食時間：</label>
-                    <input type="datetime-local" id="selectedDateTime" name="selectedDateTime"
-                           value="@ViewBag.DiaryDate" />
+            <form id="dateForm" method="post" action="/Home/DiaryArea">
+                <label for="DiaryDate">飲食時間：</label>
+                <input type="datetime-local" id="selectedDateTime" name="selectedDateTime"
+                       value="@ViewBag.DiaryDate" />
 
-                    <div class="form-group mt-2">
-                        <label for="MealType">用餐類別：</label>
-                        <select id="MealType" name="MealType" class="form-control">
-                            <option value="">-- 請選擇餐別 --</option>
-                            <option value="早餐">早餐</option>
-                            <option value="午餐">午餐</option>
-                            <option value="晚餐">晚餐</option>
-                            <option value="點心">點心</option>
-                        </select>
-                    </div>
+                <div class="form-group mt-2">
+                    <label for="MealType">用餐類別：</label>
+                    <select id="MealType" name="MealType" class="form-control">
+                        <option value="">-- 請選擇餐別 --</option>
+                        <option value="早餐">早餐</option>
+                        <option value="午餐">午餐</option>
+                        <option value="晚餐">晚餐</option>
+                        <option value="點心">點心</option>
+                    </select>
+                </div>
+                <br />
+                <select id="foodSelect" name="Food" onchange="onFoodSelectChange()">
+                    <option value="">-- 請選擇食材 --</option>
+                    @if (foodList != null)
+                    {
+                        var groupedFoods = foodList.GroupBy(f => f.Category);
+                        foreach (var group in groupedFoods)
+                        {
+                            <optgroup label="@group.Key">
+                                @foreach (var food in group)
+                                {
+                                    <option value="@food.Name"
+                                            data-calories="@food.Calories"
+                                            data-protein="@food.Protein"
+                                            data-fat="@food.Fat"
+                                            data-carb="@food.Carbs">
+                                        @food.Name
+                                    </option>
+                                }
+                            </optgroup>
+                        }
+                    }
+                    <option value="其他" @(isOther ? "selected" : "")>其他</option>
+                </select>
+
+                <select id="commonSelect" name="CommonFood" onchange="onCommonSelectChange()">
+                    <option value="">-- 請選擇食物 --</option>
+                    @if (commonFoods != null)
+                    {
+                        var groupedCommon = commonFoods.GroupBy(f => f.Category);
+                        foreach (var group in groupedCommon)
+                        {
+                            <optgroup label="@group.Key">
+                                @foreach (var common in group)
+                                {
+                                    <option value="@common.Name"
+                                            data-calories="@common.Calories"
+                                            data-protein="@common.Protein"
+                                            data-fat="@common.Fat"
+                                            data-carb="@common.Carbs">
+                                        @common.Name
+                                    </option>
+                                }
+                            </optgroup>
+                        }
+                    }
+                    <option value="其他" @(isOther ? "selected" : "")>其他</option>
+                </select>
+                <br />
+                <input type="text" id="foodOtherInput" name="FoodOther" class="form-control mt-2"
+                       style="display:none;" placeholder="請輸入食物名稱" />
+                <div>
+                    <label>數量</label>
+                    <input type="number" id="foodQty" name="FoodQty" class="form-control d-inline-block" value="1" min="1" style="width:80px;" onchange="updateNutrition()">
+                </div>
+                <div id="nutritionInputs" class="mt-2">
+                    <label>熱量</label>
+                    <input type="number" id="caloriesInput" name="Calories" class="form-control d-inline-block" style="width:100px;" value="0">
                     <br />
-            <select id="foodSelect" name="Food" onchange="onFoodSelectChange()">
-                <option value="">-- 請選擇食材 --</option>
-                @if (foodList != null)
-                {
-                    var groupedFoods = foodList.GroupBy(f => f.Category);
-                    foreach (var group in groupedFoods)
-                    {
-                        <optgroup label="@group.Key">
-                            @foreach (var food in group)
-                            {
-                                <option value="@food.Name"
-                                        data-calories="@food.Calories"
-                                        data-protein="@food.Protein"
-                                        data-fat="@food.Fat"
-                                        data-carb="@food.Carbs">
-                                    @food.Name
-                                </option>
-                            }
-                        </optgroup>
-                    }
-                }
-                <option value="其他" @(isOther ? "selected" : "")>其他</option>
-            </select>
-
-            <select id="commonSelect" name="CommonFood" onchange="onCommonSelectChange()">
-                <option value="">-- 請選擇食物 --</option>
-                @if (commonFoods != null)
-                {
-                    var groupedCommon = commonFoods.GroupBy(f => f.Category);
-                    foreach (var group in groupedCommon)
-                    {
-                        <optgroup label="@group.Key">
-                            @foreach (var common in group)
-                            {
-                                <option value="@common.Name"
-                                        data-calories="@common.Calories"
-                                        data-protein="@common.Protein"
-                                        data-fat="@common.Fat"
-                                        data-carb="@common.Carbs">
-                                    @common.Name
-                                </option>
-                            }
-                        </optgroup>
-                    }
-                }
-                <option value="其他" @(isOther ? "selected" : "")>其他</option>
-            </select>
-            <br />
-            <input type="text" id="foodOtherInput" name="FoodOther" class="form-control mt-2"
-                   style="display:none;" placeholder="請輸入食物名稱" />
-            <div>
-                <label>數量</label>
-                <input type="number" id="foodQty" name="FoodQty" class="form-control d-inline-block" value="1" min="1" style="width:80px;" onchange="updateNutrition()">
-            </div>
-            <div id="nutritionInputs" class="mt-2">
-                <label>熱量</label>
-                <input type="number" id="caloriesInput" name="Calories" class="form-control d-inline-block" style="width:100px;" value="0">
+                    <label>蛋白質</label>
+                    <input type="number" id="proteinInput" name="Protein" class="form-control d-inline-block" style="width:100px;" value="0">
+                    <br />
+                    <label>脂肪</label>
+                    <input type="number" id="fatInput" name="Fat" class="form-control d-inline-block" style="width:100px;" value="0">
+                    <br />
+                    <label>碳水化合物</label>
+                    <input type="number" id="carbInput" name="Carbs" class="form-control d-inline-block" style="width:100px;" value="0">
+                </div>
                 <br />
-                <label>蛋白質</label>
-                <input type="number" id="proteinInput" name="Protein" class="form-control d-inline-block" style="width:100px;" value="0">
-                <br />
-                <label>脂肪</label>
-                <input type="number" id="fatInput" name="Fat" class="form-control d-inline-block" style="width:100px;" value="0">
-                <br />
-                <label>碳水化合物</label>
-                <input type="number" id="carbInput" name="Carbs" class="form-control d-inline-block" style="width:100px;" value="0">
-            </div>
-            <br />
-            <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
-		</form>
+                <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
+            </form>
         </div>
     </div>
 
