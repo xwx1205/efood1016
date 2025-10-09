@@ -53,117 +53,130 @@
 </script>
 
 <style>
-    
+
     body {
-        background: linear-gradient(rgba(249,249,249,0.7), rgba(233,239,245,0.7)), url('/Image/food.png') no-repeat center center fixed;
-        background-size: cover;
-        font-family: 'Segoe UI', sans-serif;
-        margin: 0;
-    }
+    background: linear-gradient(rgba(249,249,249,0.7), rgba(233,239,245,0.7)),
+        url('/Image/food.png') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
-    .title-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 15vh;
-    }
+}
 
-    .title-bar {
-        background-color: #4a90e2;
-        color: #fff; /* 白字 */
-        padding: 12px;
-        font-weight: bold;
-        text-align: center;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        width: 385px; /* 跟 card 一樣寬 */
-        font-size: calc(385px / 8); /* 自動依寬度調整，數字可微調 */
-        line-height: 1.2;
-        white-space: nowrap; /* 不換行 */
-    }
+/* 頁面標題 */
+.title-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 15vh;
+}
 
-    /* 外層容器：讓卡片置中 */
-    .container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height:50vh;
-    }
+.title-bar {
+    background-color: #4a90e2;
+    color: #fff;
+    padding: 12px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    width: 385px;
+    font-size: calc(385px / 8);
+    line-height: 1.2;
+    white-space: nowrap;
+}
 
-    /* 卡片樣式 */
-    .card {
-        background: #fff;
-        padding: 2rem;
-        border-radius: 12px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-        width: 350px;
-        min-height: 300px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
+/* 卡片外層容器 — 置中且可自動調整高度 */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1; /* 撐滿剩下空間 */
+    padding: 20px;
+    box-sizing: border-box;
+}
 
-    /* 錯誤訊息 */
-    .alert-danger {
-        background: #ffe6e6;
-        color: #d8000c;
-        padding: 8px;
-        border-radius: 6px;
-        font-size: 14px;
-        margin-bottom: 15px;
-        text-align: center;
-    }
+/* 卡片樣式 */
+.card {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
 
-    /* 表單輸入框 */
-    .form-control, .P {
-        width: 95%;
-        padding: 10px;
-        margin-bottom: 12px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        transition: border 0.2s, box-shadow 0.2s;
-    }
+/* 錯誤訊息 */
+.alert-danger {
+    background: #ffe6e6;
+    color: #d8000c;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-bottom: 15px;
+    text-align: center;
+}
 
-    .form-control:focus, .P:focus {
-        border: 1px solid #4a90e2;
-        box-shadow: 0 0 6px rgba(74,144,226,0.5);
-        outline: none;
-    }
+/* 表單輸入框 */
+.form-control, .P {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    transition: border 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
 
-    /* 按鈕 */
-    .btn-primary {
-        background: #4a90e2;
-        border: none;
-        padding: 10px;
-        width: 100%;
-        border-radius: 8px;
-        color: white;
-        font-size: 16px;
-        margin-bottom: 10px;
-    }
+.form-control:focus, .P:focus {
+    border: 1px solid #4a90e2;
+    box-shadow: 0 0 6px rgba(74,144,226,0.5);
+    outline: none;
+}
 
-    .btn-primary:hover {
-        background: #357ABD;
-    }
+/* 按鈕樣式 */
+.btn-primary {
+    background: #4a90e2;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
 
-    /* 連結按鈕 */
-    .btn-link, .N {
-        display: block;
-        text-align: center;
-        color: #4a90e2;
-        cursor: pointer;
-        text-decoration: none;
-        margin-top: 5px;
-    }
+.btn-primary:hover {
+    background: #357ABD;
+}
 
-     .btn-link:hover, .N:hover {
-         text-decoration: underline;
-     }
+/* 文字連結按鈕 */
+.btn-link, .N {
+    display: block;
+    text-align: center;
+    color: #4a90e2;
+    cursor: pointer;
+    text-decoration: none;
+    margin-top: 5px;
+}
 
-    /* 預設隱藏註冊表單 */
-    #Two {
-        display: none;
-    }
+.btn-link:hover, .N:hover {
+    text-decoration: underline;
+}
+
+/* 預設隱藏註冊表單 */
+#Two {
+    display: none;
+}
+
+
 </style>
 
 <div class="title-container">
@@ -177,7 +190,7 @@
     <div class="card">
         <!-- 登入 -->
         <div id="One">
-            <h2 style="text-align: center; color: #537db7;">登入區</h2>
+            <h2 style="text-align: center; color: #565b5e; background-color: #f0eeec;">登入區</h2>
             @if (TempData["Note"] != null)
             {
                 <div class="alert-danger">@TempData["Note"]</div>
@@ -194,7 +207,7 @@
 
         <!-- 註冊 -->
         <div id="Two">
-            <h2 style="text-align: center; color: #537db7;">註冊區</h2>
+            <h2 style="text-align: center; color: #565b5e; background-color: #f0eeec; ">註冊區</h2>
             @if (TempData["Note"] != null)
             {
                 <div class="alert-danger">@TempData["Note"]</div>
@@ -202,37 +215,44 @@
             @using (Html.BeginForm("Register", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
             {
 
-                @Html.LabelFor(m => m.RegisterRealName)
-                @Html.TextBoxFor(m => m.RegisterRealName, new { @id = "C", @class = "P" });
+                @*@Html.LabelFor(m => m.RegisterRealName)
+            @Html.TextBoxFor(m => m.RegisterRealName, new { @id = "C", @class = "P" });*@
+                @Html.TextBox("RegisterRealName", null, new { placeholder = "請輸入姓名", @class = "form-control" })
                 @Html.ValidationMessageFor(m => m.RegisterRealName, null, new { @Class = "S" })
                 <br />
 
-                @Html.LabelFor(m => m.RegisterAccount)
-                @Html.TextBoxFor(m => m.RegisterAccount, new { @id = "A", @class = "P" });
+                @*@Html.LabelFor(m => m.RegisterAccount)
+            @Html.TextBoxFor(m => m.RegisterAccount, new { @id = "A", @class = "P" });*@
+                @Html.TextBox("RegisterAccount", null, new { placeholder = "請輸入帳號", @class = "form-control" })
                 @Html.ValidationMessageFor(m => m.RegisterAccount, null, new { @Class = "S" })
                 <br />
 
-                @Html.LabelFor(m => m.RegisterPassword)
-                @Html.TextBoxFor(m => m.RegisterPassword, new { @id = "B", @class = "P" });
+                @*@Html.LabelFor(m => m.RegisterPassword)*@
+                @Html.TextBox("RegisterPassword", null, new { placeholder = "請輸入密碼", @class = "form-control" })
+                @*@Html.TextBoxFor(m => m.RegisterPassword, new { @id = "B", @class = "P" });*@
                 <br />
 
-                @Html.LabelFor(m => m.RegisterBirthday)
-                @Html.TextBoxFor(m => m.RegisterBirthday, new { @id = "F", @class = "P" });
+                @*@Html.LabelFor(m => m.RegisterBirthday)
+            @Html.TextBoxFor(m => m.RegisterBirthday, new { @id = "F", @class = "P" });*@
+                @Html.TextBox("RegisterBirthday", null, new { placeholder = "請輸入生日", @class = "form-control" })
                 @Html.ValidationMessageFor(m => m.RegisterBirthday, null, new { @Class = "S" })
                 <br />
 
-                @Html.LabelFor(m => m.RegisterPhone)
-                @Html.TextBoxFor(m => m.RegisterPhone, new { @id = "D", @class = "P" });
+                @*@Html.LabelFor(m => m.RegisterPhone)
+            @Html.TextBoxFor(m => m.RegisterPhone, new { @id = "D", @class = "P" });*@
+                @Html.TextBox("RegisterPhone", null, new { placeholder = "請輸入電話", @class = "form-control" })
                 @Html.ValidationMessageFor(m => m.RegisterPhone, null, new { @Class = "S" })
                 <br />
 
-                @Html.LabelFor(m => m.RegisterWeight)
-                @Html.TextBoxFor(m => m.RegisterWeight, new { @class = "P", step = "0.1", type = "number" })
+                @*@Html.LabelFor(m => m.RegisterWeight)
+            @Html.TextBoxFor(m => m.RegisterWeight, new { @class = "P", step = "0.1", type = "number" })*@
+                @Html.TextBox("RegisterWeight", null, new { placeholder = "請輸入體重", @class = "form-control" })
                 @Html.ValidationMessageFor(m => m.RegisterWeight, null, new { @class = "S" })
                 <br />
 
-                @Html.LabelFor(m => m.RegisterHeight)
-                @Html.TextBoxFor(m => m.RegisterHeight, new { @id = "E", @class = "P" });
+                @*@Html.LabelFor(m => m.RegisterHeight)
+            @Html.TextBoxFor(m => m.RegisterHeight, new { @id = "E", @class = "P" });*@
+                @Html.TextBox("RegisterHeight", null, new { placeholder = "請輸入身高", @class = "form-control" })
                 @Html.ValidationMessageFor(m => m.RegisterHeight, null, new { @Class = "S" })
                 <br />
 
