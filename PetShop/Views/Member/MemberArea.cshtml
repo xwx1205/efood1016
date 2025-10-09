@@ -1,5 +1,5 @@
 ﻿<style>
-    .user-links {
+   /* .user-links {
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -18,13 +18,51 @@
 
             .user-links a:hover {
                 background-color: #3a5ea0;
-            }
+            }*/
+    .user-links {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+        .user-links a {
+            text-decoration: none;
+        }
+
+    .menu-icon {
+        width: 300px; /* 可依需求調整 */
+        height: 450px;
+        border-radius: 12px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+    }
+
+        .menu-icon:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
 </style>
 <h3>用戶專區</h3>
 <div class="user-links">
-    @Html.ActionLink("飲食紀錄", "DiaryIndex")
-    @Html.ActionLink("餐點選擇", "MealIndex")
-    @Html.ActionLink("統計圖表", "PictogramIndex")
-    @Html.ActionLink("營養分析", "Analysis1Index")
+    @*@Html.ActionLink("飲食紀錄", "DiaryIndex")
+        @Html.ActionLink("餐點選擇", "MealIndex")
+        @Html.ActionLink("統計圖表", "PictogramIndex")
+        @Html.ActionLink("營養分析", "Analysis1Index")*@
+    <div class="user-links">
+        <a href="@Url.Action("DiaryIndex", "Home")">
+            <img src="~/Image/飲食紀錄.png" alt="飲食紀錄" class="menu-icon">
+        </a>
+        <a href="@Url.Action("MealIndex", "Home")">
+            <img src="~/Image/目標設定.png" alt="目標設定" class="menu-icon">
+        </a>
+        
+        <a href="@Url.Action("Analysis1Index", "Home")">
+            <img src="~/Image/飲食分析.png" alt="飲食分析" class="menu-icon">
+        </a>
+    </div>
+
 </div>
 
