@@ -113,7 +113,7 @@
                             <div class="mt-2">
                                 @if (!string.IsNullOrWhiteSpace(entry.Food))
                                 {
-                                    <div><strong>食物：</strong>@entry.Food</div>
+                                    <div><strong>食物：</strong>@entry.Food (@entry.Quantity 份)</div>
                                     <div><strong>餐別：</strong>@entry.MealType</div>
                                     <div><strong>熱量：</strong>@entry.Calories kcal</div>
                                 }
@@ -209,7 +209,7 @@
                        style="display:none;" placeholder="請輸入食物名稱" />
                 <div>
                     <label>數量</label>
-                    <input type="number" id="foodQty" name="FoodQty" class="form-control d-inline-block" value="1" min="1" style="width:80px;" onchange="updateNutrition()">
+                    <input type="number" id="qtyInput" name="Quantity" class="form-control d-inline-block" value="1" min="1" style="width:80px;" onchange="updateNutrition()">
                 </div>
                 <div id="nutritionInputs" class="mt-2">
                     <label>熱量</label>
@@ -225,6 +225,7 @@
                     <input type="number" id="carbInput" name="Carbs" class="form-control d-inline-block" style="width:100px;" value="0">
                 </div>
                 <br />
+                <input type="hidden" id="categoryInput" name="Category" value="" />
                 <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
             </form>
         </div>
@@ -304,7 +305,11 @@
 
         document.getElementById('foodSelect').addEventListener('change', function () {
             var selected = this.options[this.selectedIndex];
+            var category = selected.parentElement.label;
             var calories = selected.getAttribute('data-calories');
+            var protein = selected.getAttribute('data-protein');
+            var fat = selected.getAttribute('data-fat');
+            var carb = selected.getAttribute('data-carb');
             if (calories && selected.value !== "其他") {
                 document.getElementById('caloriesInput').value = calories;
                 document.getElementById('proteinInput').value = protein;
@@ -315,7 +320,12 @@
 
         document.getElementById('commonSelect').addEventListener('change', function () {
             var selected = this.options[this.selectedIndex];
+            var category = selected.parentElement.label;
             var calories = selected.getAttribute('data-calories');
+            var calories = selected.getAttribute('data-calories');
+            var protein = selected.getAttribute('data-protein');
+            var fat = selected.getAttribute('data-fat');
+            var carb = selected.getAttribute('data-carb');
             if (calories && calories !== "其他") {
                 document.getElementById('caloriesInput').value = calories;
                 document.getElementById('proteinInput').value = protein;
@@ -345,7 +355,7 @@
         function updateNutrition() {
             // 取得選擇的食材
             var select = document.getElementById('foodSelect');
-            var qty = parseInt(document.getElementById('foodQty').value) || 1;
+            var qty = parseInt(document.getElementById('Quantity').value) || 1;
             var selected = select.options[select.selectedIndex];
 
             var calories = parseFloat(selected.getAttribute('data-calories')) || 0;
@@ -366,5 +376,5 @@
 
         // 初始化
         document.getElementById('foodSelect').addEventListener('change', updateNutritionInputs);
-        document.getElementById('foodQty').addEventListener('change', updateNutritionInputs);
+        document.getElementById('Quantity').addEventListener('change', updateNutritionInputs);
     </script>

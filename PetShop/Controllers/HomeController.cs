@@ -369,6 +369,7 @@ namespace PetShop.Controllers
         [HttpPost]
         public ActionResult DiaryArea()
         {
+            string Category = Request["Category"]?.ToString();
             string MealType = Request["MealType"]?.ToString();
             string food = "";
             if (!string.IsNullOrEmpty(Request["Food"]) && Request["Food"] != "其他")
@@ -377,7 +378,8 @@ namespace PetShop.Controllers
                 food = Request["CommonFood"];
             else if (Request["Food"] == "其他" || Request["CommonFood"] == "其他")
                 food = Request["FoodOther"];
-            int calories = 0;
+            int calories = 0, quantity=0;
+            int.TryParse(Request["Quantity"], out quantity);
             int.TryParse(Request["Calories"], out calories);
             decimal protein = 0, fat = 0, carbs = 0;
             decimal.TryParse(Request["Protein"], out protein);
@@ -389,16 +391,18 @@ namespace PetShop.Controllers
             {
                 string account = Session["LoginUser"]?.ToString();
                 X.Open();
-                string G = "INSERT INTO Diary (Account, Food, Calories, Protein, Fat, Carbs, MealType) VALUES (@Account, @Food, @Calories, @Protein, @Fat, @Carbs, @MealType)";
+                string G = "INSERT INTO Diary (Account, Category, Food, Calories, Protein, Fat, Carbs, MealType, Quantity) VALUES (@Account, @Category, @Food, @Calories, @Protein, @Fat, @Carbs, @MealType, @Quantity)";
 
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", account);
+                Q.Parameters.AddWithValue("@Category", Category);
                 Q.Parameters.AddWithValue("@Food", food);
                 Q.Parameters.AddWithValue("@Calories", calories);
                 Q.Parameters.AddWithValue("@Protein", protein);
                 Q.Parameters.AddWithValue("@Fat", fat);
                 Q.Parameters.AddWithValue("@Carbs", carbs);
                 Q.Parameters.AddWithValue("@MealType", MealType);
+                Q.Parameters.AddWithValue("@Quantity", quantity);
 
                 Q.ExecuteNonQuery();
                 Response = "建立成功";
@@ -438,7 +442,7 @@ namespace PetShop.Controllers
             {
                 X.Open();
                 // 取得日記
-                string G = "SELECT Id, CreateTime, Food, Calories, Protein, Fat, Carbs, MealType FROM Diary WHERE Account = @Account";
+                string G = "SELECT Id, CreateTime, Food, Calories, Protein, Fat, Carbs, MealType, Category, Quantity FROM Diary WHERE Account = @Account";
 
                 if (!string.IsNullOrEmpty(date))
                 {
@@ -460,25 +464,20 @@ namespace PetShop.Controllers
 
                 while (reader.Read())
                 {
-                    int id = (int)reader["Id"];
-                    DateTime createTime = reader["CreateTime"] != DBNull.Value ? Convert.ToDateTime(reader["CreateTime"]) : DateTime.MinValue;
-                    string food = reader["Food"] as string ?? "";
-                    int calories = reader["Calories"] != DBNull.Value ? Convert.ToInt32(reader["Calories"]) : 0;
-                    int protein = reader["Protein"] != DBNull.Value ? Convert.ToInt32(reader["Protein"]) : 0;
-                    int fat = reader["Fat"] != DBNull.Value ? Convert.ToInt32(reader["Fat"]) : 0;
-                    int carbs = reader["Carbs"] != DBNull.Value ? Convert.ToInt32(reader["Carbs"]) : 0;
-                    userDiaries.Add(new DiaryEntry
+                    var entry = new DiaryEntry
                     {
-                        Id = id,
-                        CreateTime = createTime,
-                        Food = food,
-                        Calories = calories,
-                        Protein = protein,
-                        Fat = fat,
-                        Carbs = carbs,
-                        MealType = reader["MealType"] != DBNull.Value ? reader["MealType"].ToString() : ""
-
-                    });
+                        Id = reader["Id"] != DBNull.Value ? Convert.ToInt32(reader["Id"]) : 0,
+                        CreateTime = reader["CreateTime"] != DBNull.Value ? Convert.ToDateTime(reader["CreateTime"]) : DateTime.MinValue,
+                        Food = reader["Food"] != DBNull.Value ? reader["Food"].ToString() : "",
+                        Calories = reader["Calories"] != DBNull.Value ? Convert.ToInt32(reader["Calories"]) : 0,
+                        Protein = reader["Protein"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Protein"]) : null,
+                        Fat = reader["Fat"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Fat"]) : null,
+                        Carbs = reader["Carbs"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Carbs"]) : null,
+                        MealType = reader["MealType"] != DBNull.Value ? reader["MealType"].ToString() : "",
+                        Quantity = reader["Quantity"] != DBNull.Value ? Convert.ToInt32(reader["Quantity"]) : 0,
+                        Category = reader["Category"] != DBNull.Value ? reader["Category"].ToString() : ""
+                    };
+                    userDiaries.Add(entry);
                 }
                 reader.Close();
 
@@ -547,6 +546,10 @@ namespace PetShop.Controllers
                         Id = (int)reader["Id"],
                         Food = reader["Food"].ToString(),
                         Calories = Convert.ToInt32(reader["Calories"]),
+                        Protein = reader["Protein"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Protein"]) : null,
+                        Fat = reader["Fat"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Fat"]) : null,
+                        Carbs = reader["Carbs"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Carbs"]) : null,
+                        Quantity = reader["Quantity"] != DBNull.Value ? Convert.ToInt32(reader["Quantity"]) : 0,
                         CreateTime = Convert.ToDateTime(reader["CreateTime"])
                     };
                 }
@@ -562,7 +565,7 @@ namespace PetShop.Controllers
             try
             {
                 X.Open();
-                string sql = "UPDATE Diary SET Food=@Food, Calories=@Calories, Protein=@Protein, Fat=@Fat, Carbs=@Carbs WHERE Id=@Id";
+                string sql = "UPDATE Diary SET Food=@Food, Calories=@Calories, Protein=@Protein, Fat=@Fat, Carbs=@Carbs, Quantity=@Quantity WHERE Id=@Id";
                 SqlCommand cmd = new SqlCommand(sql, X);
                 cmd.Parameters.AddWithValue("@Food", entry.Food);
                 cmd.Parameters.AddWithValue("@Calories", entry.Calories);
@@ -570,6 +573,7 @@ namespace PetShop.Controllers
                 cmd.Parameters.AddWithValue("@Fat", entry.Fat ?? 0);
                 cmd.Parameters.AddWithValue("@Carbs", entry.Carbs ?? 0);
                 cmd.Parameters.AddWithValue("@Id", entry.Id);
+                cmd.Parameters.AddWithValue("@Quantity", entry.Quantity);
                 cmd.ExecuteNonQuery();
             }
             finally { X.Close(); }
