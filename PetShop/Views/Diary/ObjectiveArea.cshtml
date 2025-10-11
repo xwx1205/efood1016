@@ -1,0 +1,142 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "目標設定";
+
+    // 從 ViewBag 取得會員資料（由 HomeController 傳入）
+    var member = ViewBag.Member as PetShop.Models.RegisterUser ?? new PetShop.Models.RegisterUser
+    {
+        RegisterHeight = 0,
+        RegisterWeight = 0
+    };
+
+    // 計算 BMI
+    float heightInMeters = member.RegisterHeight / 100; // 將公分換算成公尺
+    float bmi = heightInMeters > 0 ? (float)Math.Round(member.RegisterWeight / (heightInMeters * heightInMeters), 1) : 0;
+
+    // 判斷體重狀態
+    string weightStatus = "未知";
+    if (bmi > 0)
+    {
+        if (bmi < 18.5)
+        {
+            weightStatus = "過輕";
+        }
+        else if (bmi >= 18.5 && bmi < 24)
+        {
+            weightStatus = "適中";
+        }
+        else
+        {
+            weightStatus = "過重";
+        }
+    }
+
+    // 計算基礎代謝率（BMR）與每日建議熱量（以男性、30歲、中度活動為假設）
+    int assumedAge = 30;
+    double bmr = 10 * member.RegisterWeight + 6.25 * member.RegisterHeight - 5 * assumedAge + 5;
+    double dailyCalories = Math.Round(bmr * 1.55, 0); // 中度活動係數
+}
+
+<!-- 主內容區：兩欄式版面 -->
+<div style="display: flex; height: 70vh; width: 95%; margin: 0 auto; padding: 0; position: relative; z-index: 1;">
+    <!-- 左半部：基本資料 -->
+    <div style="flex: 1; padding: 30px; display: flex; flex-direction: column; align-items: flex-start; width: 40%; max-width: 33vw;">
+        <h2 style="margin: 0 0 20px 0; align-self: flex-start;">目標設定</h2>
+        <div style="width: 100%; border: 2px solid #ccc; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; justify-content: flex-start; position: relative; height: calc(100% - 60px); background-color: #fff;">
+            <!-- 標題與會員照片 -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0 auto; font-size: 20px;">基本資料</h3>
+                @if (Session["LoginUser"] != null && Session["ImageName"] != null)
+                {
+                    <a href="@Url.Action("MemberInfo", "Home", new { account = Session["LoginUser"] })">
+                        <img src="@Url.Content("~/Photo/" + Session["ImageName"])" alt="會員照片" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer;" />
+                    </a>
+                }
+            </div>
+            <hr style="border: 1px solid #ccc; margin: 10px 0;" />
+            <!-- 顯示會員資訊 -->
+            <div style="display: flex; flex-direction: column; align-items: flex-start; font-size: 20px;">
+                <div style="margin-bottom: 10px;">身高: @member.RegisterHeight cm</div>
+                <div style="margin-bottom: 10px;">體重: @member.RegisterWeight kg</div>
+                <div style="margin-bottom: 10px;">BMI: @bmi</div>
+                <div>體重狀態: @weightStatus</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 中間間隔 -->
+    <div style="width: 8%;"></div>
+
+    <!-- 右半部：目標設定與熱量分析 -->
+    <div style="flex: 1; padding: 30px; display: flex; flex-direction: column; align-items: flex-start; width: 40%;">
+        <!-- 目標設定方框 -->
+        <div style="width: 100%; border: 2px solid #ccc; border-radius: 10px; padding: 20px; margin-bottom: 20px; height: calc(60% - 20px); background-color: #fff;">
+            <h3 style="margin: 0 0 20px 0; font-size: 20px;">設定目標</h3>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <label style="font-size: 18px; margin-right: 10px;">目標時間（天）:</label>
+                    <input type="number" id="targetDays" name="targetDays" value="30" min="1" style="font-size: 16px; padding: 5px; width: 100px;" />
+                </div>
+                <div>
+                    <label style="font-size: 18px; margin-right: 10px;">目標體重（kg）:</label>
+                    <input type="number" id="targetWeight" name="targetWeight" value="@member.RegisterWeight" step="0.1" min="0" style="font-size: 16px; padding: 5px; width: 100px;" />
+                </div>
+                <div>
+                    <button id="updateGoal" style="font-size: 16px; padding: 8px 16px; background-color: #466954; color: white; border: none; border-radius: 5px; cursor: pointer;">更新目標</button>
+                </div>
+            </div>
+        </div>
+        <!-- 每日所需熱量方框 -->
+        <div style="width: 100%; border: 2px solid #ccc; border-radius: 10px; padding: 20px; position: relative; height: calc(40% - 20px); background-color: #fff;">
+            <h3 style="margin: 0 0 10px 0; font-size: 20px;">每日所需熱量</h3>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 48px; font-weight: bold;">@dailyCalories</span>
+            </div>
+            <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">kcal</div>
+        </div>
+    </div>
+    <div style="width: 20%;"></div>
+</div>
+
+<!-- JavaScript（處理更新目標按鈕） -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // 監聽更新目標按鈕
+        $('#updateGoal').click(function () {
+            var targetDays = $('#targetDays').val();
+            var targetWeight = $('#targetWeight').val();
+            var account = '@Session["LoginUser"]';
+
+            if (!targetDays || targetDays < 1) {
+                alert('請輸入有效的目標天數（至少1天）');
+                return;
+            }
+            if (!targetWeight || targetWeight <= 0) {
+                alert('請輸入有效的目標體重（大於0）');
+                return;
+            }
+
+            // AJAX 提交目標資料到後端
+            $.ajax({
+                url: '@Url.Action("SaveObjective", "Home")',
+                type: 'POST',
+                data: {
+                    account: account,
+                    targetDays: targetDays,
+                    targetWeight: targetWeight
+                },
+                success: function (response) {
+                    if (response.success) {
+                        alert('目標更新成功！');
+                    } else {
+                        alert('目標更新失敗：' + response.message);
+                    }
+                },
+                error: function () {
+                    alert('無法連接到伺服器，請稍後再試。');
+                }
+            });
+        });
+    });
+</script>

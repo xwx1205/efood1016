@@ -14,7 +14,7 @@ namespace PetShop.Controllers
 {
     public class HomeController : Controller
     {
-        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\efood\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
+        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\User\source\repos\efood-1\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
         public MyDbContext db = new MyDbContext();
         public string Result2 { get; set; }
         //修改會員資料
@@ -901,6 +901,90 @@ namespace PetShop.Controllers
             string account = Session["LoginUser"]?.ToString();
             ViewBag.Account = account;
             return View("~/Views/Diary/Analysis3Area.cshtml");
+        }
+
+        [HttpPost]
+        public JsonResult SaveObjective(string account, int targetDays, float targetWeight)
+        {
+            if (string.IsNullOrEmpty(account))
+            {
+                return Json(new { success = false, message = "未登入" });
+            }
+            if (targetDays < 1)
+            {
+                return Json(new { success = false, message = "目標天數必須大於或等於1" });
+            }
+            if (targetWeight <= 0)
+            {
+                return Json(new { success = false, message = "目標體重必須大於0" });
+            }
+
+            try
+            {
+                X.Open();
+                string sql = @"IF EXISTS (SELECT 1 FROM Objectives WHERE Account = @Account)
+                       UPDATE Objectives SET TargetDays = @TargetDays, TargetWeight = @TargetWeight, CreatedAt = GETDATE() WHERE Account = @Account
+                       ELSE
+                       INSERT INTO Objectives (Account, TargetDays, TargetWeight) VALUES (@Account, @TargetDays, @TargetWeight)";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Account", account);
+                cmd.Parameters.AddWithValue("@TargetDays", targetDays);
+                cmd.Parameters.AddWithValue("@TargetWeight", targetWeight);
+                cmd.ExecuteNonQuery();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+            finally
+            {
+                X.Close();
+            }
+        }
+        public ActionResult ObjectiveIndex()
+        {
+            string account = Session["LoginUser"]?.ToString();
+            ViewBag.Account = account;
+            Models.RegisterUser member = null;
+
+            if (!string.IsNullOrEmpty(account))
+            {
+                try
+                {
+                    X.Open();
+                    string sql = "SELECT * FROM [Member] WHERE Account = @Account";
+                    SqlCommand cmd = new SqlCommand(sql, X);
+                    cmd.Parameters.AddWithValue("@Account", account);
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        member = new Models.RegisterUser
+                        {
+                            RegisterAccount = reader["Account"].ToString(),
+                            RegisterRealName = reader["RealName"].ToString(),
+                            RegisterPhone = reader["Phone"].ToString(),
+                            RegisterWeight = float.Parse(reader["Weight"].ToString()),
+                            RegisterHeight = float.Parse(reader["Height"].ToString()),
+                            RegisterBirthday = reader["Birthday"].ToString(),
+                            ImageName = reader["ImageName"].ToString()
+                        };
+                    }
+                    reader.Close();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("會員查詢錯誤：" + ex.Message);
+                }
+                finally
+                {
+                    X.Close();
+                }
+            }
+
+            ViewBag.Member = member;
+            return View("~/Views/Diary/ObjectiveArea.cshtml");
         }
         public ActionResult MealIndex(string date)
         {
