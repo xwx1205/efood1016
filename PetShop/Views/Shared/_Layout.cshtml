@@ -64,6 +64,21 @@
             text-align: center;
             z-index: 100;
         }
+        .top-links a {
+            color: #565b5e; /* 預設字體顏色 */
+            font-size: 16px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+            .top-links a:hover {
+                color: #8e8480; /* 滑鼠移過去的顏色 */
+                text-decoration: underline;
+            }
+
+
+
     </style>
     <style>
         .container {
@@ -124,24 +139,27 @@
             .profile-tooltip a:hover {
                 text-decoration: underline;
             }
+
     </style>
 </head>
 <body>
     <header>E-食代</header>
-    <div style="display: flex; justify-content: flex-end; gap: 20px; width: 100%; padding-right: 30px;">
+    <div class="top-links" style="display: flex; justify-content: flex-end; gap: 20px; width: 100%; padding-right: 30px;">
 
         @if (Session["LoginUser"] == null)
         {
-            @Html.ActionLink("登入/註冊", "LeaveHome", new { @style = "font-size:16px;color:blue" })
+            @Html.ActionLink("登入/註冊", "LeaveHome", null, new { @class = "nav-link" })
         }
         else
         {
-            @*Session["LoginUser"]<span>登入</span>*@
-            @*@Html.ActionLink("登出", "Logout")*@
+            @* 登出選項也可以放這 *@
+            @Html.ActionLink("登出", "Logout", null, new { @class = "nav-link" })
         }
 
-        @Html.ActionLink("回首頁", "Index", new { @style = "font-size:16px;color:blue" })
+        @Html.ActionLink("回首頁", "Index", null, new { @class = "nav-link" })
     </div>
+
+
     @RenderBody()
     <h6>版權所有，抄襲必究</h6>
 

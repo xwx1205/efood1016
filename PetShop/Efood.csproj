@@ -199,6 +199,7 @@
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
     <Content Include="Image\food.png" />
+    <Content Include="Image\food2.png" />
     <Content Include="Image\目標設定.png" />
     <Content Include="Image\目標設定icon.png" />
     <Content Include="Image\飲食分析.png" />
