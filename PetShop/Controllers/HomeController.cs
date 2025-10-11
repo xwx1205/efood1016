@@ -386,12 +386,18 @@ namespace PetShop.Controllers
             decimal.TryParse(Request["Fat"], out fat);
             decimal.TryParse(Request["Carbs"], out carbs);
 
+            DateTime createTime = DateTime.Now;
+            if (!string.IsNullOrEmpty(Request["selectedDateTime"]))
+            {
+                DateTime.TryParse(Request["selectedDateTime"], out createTime);
+            }
+
             string Response;
             try
             {
                 string account = Session["LoginUser"]?.ToString();
                 X.Open();
-                string G = "INSERT INTO Diary (Account, Category, Food, Calories, Protein, Fat, Carbs, MealType, Quantity) VALUES (@Account, @Category, @Food, @Calories, @Protein, @Fat, @Carbs, @MealType, @Quantity)";
+                string G = "INSERT INTO Diary (Account, Category, Food, Calories, Protein, Fat, Carbs, MealType, Quantity, CreateTime) VALUES (@Account, @Category, @Food, @Calories, @Protein, @Fat, @Carbs, @MealType, @Quantity, @CreateTime)";
 
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", account);
@@ -403,6 +409,7 @@ namespace PetShop.Controllers
                 Q.Parameters.AddWithValue("@Carbs", carbs);
                 Q.Parameters.AddWithValue("@MealType", MealType);
                 Q.Parameters.AddWithValue("@Quantity", quantity);
+                Q.Parameters.AddWithValue("@CreateTime", createTime);
 
                 Q.ExecuteNonQuery();
                 Response = "建立成功";
