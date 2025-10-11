@@ -14,7 +14,7 @@ namespace PetShop.Controllers
 {
     public class HomeController : Controller
     {
-        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\User\source\repos\efood-1\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
+        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\efood\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
         public MyDbContext db = new MyDbContext();
         public string Result2 { get; set; }
         //修改會員資料
@@ -768,139 +768,6 @@ namespace PetShop.Controllers
             string account = Session["LoginUser"]?.ToString();
             ViewBag.Account = account;
             return View("~/Views/Diary/PictogramArea.cshtml");
-        }
-        public ActionResult Analysis1Index(string selectedDate)
-        {
-            string account = Session["LoginUser"]?.ToString();
-            ViewBag.Account = account;
-
-            // 設定近七天日期和數據
-            DateTime startDate = string.IsNullOrEmpty(selectedDate) ? DateTime.Today : DateTime.Parse(selectedDate);
-            Dictionary<string, string> weekData = new Dictionary<string, string>();
-            double totalCalories = 0;
-            int daysWithData = 0;
-
-            try
-            {
-                X.Open();
-                for (int i = 0; i < 7; i++)
-                {
-                    DateTime currentDate = startDate.AddDays(-6 + i);
-
-                    // 查詢當日餐點記錄並計算熱量
-                    string sql = @"
-                SELECT d.Food, d.Calories 
-                FROM Diary d 
-                WHERE d.Account = @Account AND CONVERT(date, d.CreateTime) = @Date";
-                    SqlCommand cmd = new SqlCommand(sql, X);
-                    cmd.Parameters.AddWithValue("@Account", account);
-                    cmd.Parameters.AddWithValue("@Date", currentDate.Date);
-                    SqlDataReader reader = cmd.ExecuteReader();
-
-                    string mealDetails = "";
-                    bool hasData = false;
-                    while (reader.Read())
-                    {
-                        hasData = true;
-                        string food = reader["Food"]?.ToString() ?? "未知餐點";
-                        int calories = reader["Calories"] != DBNull.Value ? Convert.ToInt32(reader["Calories"]) : 0;
-                        mealDetails += $"{food} ({calories} kcal), ";
-                        totalCalories += calories;
-                    }
-                    reader.Close();
-                    if (hasData) daysWithData++;
-                    weekData[currentDate.ToString("yyyy-MM-dd")] = string.IsNullOrEmpty(mealDetails) ? "無記錄" : mealDetails.TrimEnd(',', ' ');
-                }
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = "無法載入數據：" + ex.Message;
-            }
-            finally
-            {
-                X.Close();
-            }
-
-            // 計算平均熱量
-            double averageCalories = daysWithData > 0 ? Math.Round(totalCalories / daysWithData, 1) : 0;
-
-            // 設定數據，營養素預設為 0
-            ViewBag.AverageCalories = averageCalories;
-            ViewBag.Nutrients = new { Carbs = 0.0, Fat = 0.0, Protein = 0.0 };
-            ViewBag.WeekData = weekData;
-            ViewBag.SelectedDate = startDate.ToString("yyyy-MM-dd");
-
-            return View("~/Views/Diary/Analysis1Area.cshtml");
-        }
-        public ActionResult Analysis2Index(string selectedDate)
-        {
-            string account = Session["LoginUser"]?.ToString();
-            ViewBag.Account = account;
-
-            // 設定近七天日期和熱量數據
-            string[] dates = new string[7];
-            int[] calories = new int[7];
-            DateTime startDate = string.IsNullOrEmpty(selectedDate) ? DateTime.Today : DateTime.Parse(selectedDate);
-            Dictionary<string, string> weekData = new Dictionary<string, string>();
-
-            try
-            {
-                X.Open();
-                for (int i = 0; i < 7; i++)
-                {
-                    DateTime currentDate = startDate.AddDays(-6 + i);
-                    dates[i] = currentDate.ToString("MM/dd");
-
-                    // 查詢當日熱量總和
-                    string sql = "SELECT SUM(Calories) as TotalCalories FROM Diary WHERE Account = @Account AND CONVERT(date, CreateTime) = @Date";
-                    SqlCommand cmd = new SqlCommand(sql, X);
-                    cmd.Parameters.AddWithValue("@Account", account);
-                    cmd.Parameters.AddWithValue("@Date", currentDate.Date);
-                    object result = cmd.ExecuteScalar();
-                    calories[i] = result != DBNull.Value ? Convert.ToInt32(result) : 0;
-
-                    // 查詢當日餐點記錄
-                    string mealSql = "SELECT Food, Calories FROM Diary WHERE Account = @Account AND CONVERT(date, CreateTime) = @Date";
-                    SqlCommand mealCmd = new SqlCommand(mealSql, X);
-                    mealCmd.Parameters.AddWithValue("@Account", account);
-                    mealCmd.Parameters.AddWithValue("@Date", currentDate.Date);
-                    SqlDataReader reader = mealCmd.ExecuteReader();
-                    string mealDetails = "";
-                    while (reader.Read())
-                    {
-                        string food = reader["Food"]?.ToString() ?? "未知餐點";
-                        int mealCalories = reader["Calories"] != DBNull.Value ? Convert.ToInt32(reader["Calories"]) : 0;
-                        mealDetails += $"{food} ({mealCalories} kcal), ";
-                    }
-                    reader.Close();
-                    weekData[currentDate.ToString("yyyy-MM-dd")] = string.IsNullOrEmpty(mealDetails) ? "無記錄" : mealDetails.TrimEnd(',', ' ');
-                }
-            }
-            catch (Exception ex)
-            {
-                // 錯誤處理
-                ViewBag.Error = "無法載入數據：" + ex.Message;
-            }
-            finally
-            {
-                X.Close();
-            }
-
-            ViewBag.Dates = dates;
-            ViewBag.Calories = calories;
-            ViewBag.WeekData = weekData;
-            ViewBag.SelectedDate = startDate.ToString("yyyy-MM-dd");
-
-            return View("~/Views/Diary/Analysis2Area.cshtml");
-        }
-        public ActionResult Analysis3Index()
-        {
-            ViewBag.Labels = new string[] { "碳水", "脂肪", "蛋白質" };
-            ViewBag.Values = new int[] { 10, 20, 30 };
-
-            string account = Session["LoginUser"]?.ToString();
-            ViewBag.Account = account;
-            return View("~/Views/Diary/Analysis3Area.cshtml");
         }
 
         [HttpPost]
