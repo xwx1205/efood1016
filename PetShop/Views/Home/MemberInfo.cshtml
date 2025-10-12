@@ -3,11 +3,96 @@
 <div class="container">
     <h2>會員資料修改</h2>
 
+
+    <style>
+       
+        body {
+            background: linear-gradient(rgba(249,249,249,0.7), rgba(233,239,245,0.7)), url('/Image/food2.png') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+        }
+    
+
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            width: 440px;
+            text-align: left;
+        }
+
+            .container h2 {
+                text-align: center;
+                color: #333;
+                margin-bottom: 20px;
+                margin-top: -20px;
+            }
+
+        /* 每一列對齊樣式 */
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+            .form-row strong {
+                width: 80px;
+                flex-shrink: 0;
+                color: #333;
+            }
+
+            .form-row input[type="text"],
+            .form-row input[type="date"],
+            .form-row input[type="file"] {
+                flex: 1;
+                padding: 6px 10px;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                font-size: 14px;
+            }
+
+        .profile-photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #eee;
+            display: block;
+            margin: 0 auto 10px auto;
+        }
+
+        .btn-primary {
+            display: block;
+            margin: 20px auto 0 auto;
+            background-color: #c2beba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            .btn-primary:hover {
+                background-color: #737373;
+            }
+    </style>
+
+
     @if (Model != null)
     {
         using (Html.BeginForm("UpdateMemberInfo", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
         {
             @Html.HiddenFor(m => m.RegisterAccount)
+
+            <p>
+                <strong>個人檔案照片</strong><br />
+                <img src="~/Photo/@Model.ImageName" alt="會員照片" style="width:100px;height:100px;border-radius:50%;object-fit:cover;" /><br />
+                <input type="file" name="ImageFile" />
+            </p>
 
             <p>
                 <strong>帳號：</strong>@Model.RegisterAccount
@@ -21,10 +106,14 @@
                 <strong>電話：</strong>
                 @Html.TextBoxFor(m => m.RegisterPhone)
             </p>
+
+
             <p>
                 <strong>生日：</strong>
-                @Html.TextBoxFor(m => m.RegisterBirthday)
+                @Html.TextBoxFor(m => m.RegisterBirthday, new { type = "text" })
             </p>
+
+
             <p>
                 <strong>身高：</strong>
                 @Html.TextBoxFor(m => m.RegisterHeight)
@@ -33,11 +122,7 @@
                 <strong>體重：</strong>
                 @Html.TextBoxFor(m => m.RegisterWeight)
             </p>
-            <p>
-                <strong>照片：</strong><br />
-                <img src="~/Photo/@Model.ImageName" alt="會員照片" style="width:100px;height:100px;border-radius:50%;object-fit:cover;" /><br />
-                <input type="file" name="ImageFile" />
-            </p>
+
             <button type="submit" class="btn btn-primary">更新資料</button>
         }
     }
@@ -45,4 +130,5 @@
     {
         <p>找不到會員資料。</p>
     }
+   
 </div>
