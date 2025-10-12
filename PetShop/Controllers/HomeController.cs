@@ -14,7 +14,7 @@ namespace PetShop.Controllers
 {
     public class HomeController : Controller
     {
-        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\efood\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
+        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\yisiu\Source\Repos\efood-6\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
         public MyDbContext db = new MyDbContext();
         public string Result2 { get; set; }
         //修改會員資料
@@ -557,7 +557,8 @@ namespace PetShop.Controllers
                         Fat = reader["Fat"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Fat"]) : null,
                         Carbs = reader["Carbs"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Carbs"]) : null,
                         Quantity = reader["Quantity"] != DBNull.Value ? Convert.ToInt32(reader["Quantity"]) : 0,
-                        CreateTime = Convert.ToDateTime(reader["CreateTime"])
+                        CreateTime = Convert.ToDateTime(reader["CreateTime"]),
+                        MealType = reader["MealType"].ToString()
                     };
                 }
                 reader.Close();
@@ -572,7 +573,7 @@ namespace PetShop.Controllers
             try
             {
                 X.Open();
-                string sql = "UPDATE Diary SET Food=@Food, Calories=@Calories, Protein=@Protein, Fat=@Fat, Carbs=@Carbs, Quantity=@Quantity WHERE Id=@Id";
+                string sql = "UPDATE Diary SET Food=@Food, Calories=@Calories, Protein=@Protein, Fat=@Fat,MealType=@MealType, Carbs=@Carbs, Quantity=@Quantity WHERE Id=@Id";
                 SqlCommand cmd = new SqlCommand(sql, X);
                 cmd.Parameters.AddWithValue("@Food", entry.Food);
                 cmd.Parameters.AddWithValue("@Calories", entry.Calories);
@@ -581,16 +582,33 @@ namespace PetShop.Controllers
                 cmd.Parameters.AddWithValue("@Carbs", entry.Carbs ?? 0);
                 cmd.Parameters.AddWithValue("@Id", entry.Id);
                 cmd.Parameters.AddWithValue("@Quantity", entry.Quantity);
+                cmd.Parameters.AddWithValue("@MealType", entry.MealType);
                 cmd.ExecuteNonQuery();
             }
             finally { X.Close(); }
             return RedirectToAction("DiaryIndex");
         }
+        //public JsonResult DeleteDiary(int id)
+        //{
+        //    Debug.WriteLine(id);
+        //    bool success = false;
+        //    try
+        //    {
+        //        X.Open();
+        //        string sql = "DELETE FROM Diary WHERE Id=@Id";
+        //        SqlCommand cmd = new SqlCommand(sql, X);
+        //        cmd.Parameters.AddWithValue("@Id", id);
+        //        success = cmd.ExecuteNonQuery() > 0;
+        //    }
+        //    finally { X.Close(); }
+        //    return Json(new { success });
+
+        //}
         [HttpPost]
         public JsonResult DeleteDiary(int id)
         {
-            Debug.WriteLine(id);
             bool success = false;
+            string message = "";
             try
             {
                 X.Open();
@@ -598,10 +616,19 @@ namespace PetShop.Controllers
                 SqlCommand cmd = new SqlCommand(sql, X);
                 cmd.Parameters.AddWithValue("@Id", id);
                 success = cmd.ExecuteNonQuery() > 0;
+                if (!success) message = "找不到該日記";
             }
-            finally { X.Close(); }
-            return Json(new { success });
+            catch (Exception ex)
+            {
+                message = ex.Message;
+            }
+            finally
+            {
+                X.Close();
+            }
+            return Json(new { success, message });
         }
+
         [HttpPost]
         public JsonResult Check(int count)
         {
