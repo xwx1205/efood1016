@@ -1,12 +1,12 @@
-﻿@{
-    Layout = "~/Views/Shared/_Layout.cshtml";
-    var entries = ViewBag.UserDiaries as List<PetShop.Models.DiaryEntry>;
-    //var selectedDate = ViewBag.SelectedDate as string;
-    var foodList = ViewBag.FoodList as List<PetShop.Models.Food>;
-    var commonFoods = ViewBag.CommonFoods as List<PetShop.Models.CommonFood>;
-    bool isOther = false;
-    string selectedDate = Request.QueryString["date"];
-    var diaryDate = !string.IsNullOrEmpty(selectedDate) ? selectedDate : DateTime.Today.ToString("yyyy-MM-dd");
+﻿  @{
+      Layout = "~/Views/Shared/_Layout.cshtml";
+      var entries = ViewBag.UserDiaries as List<PetShop.Models.DiaryEntry>;
+      //var selectedDate = ViewBag.SelectedDate as string;
+      var foodList = ViewBag.FoodList as List<PetShop.Models.Food>;
+      var commonFoods = ViewBag.CommonFoods as List<PetShop.Models.CommonFood>;
+      bool isOther = false;
+      string selectedDate = Request.QueryString["date"];
+      var diaryDate = !string.IsNullOrEmpty(selectedDate) ? selectedDate : DateTime.Today.ToString("yyyy-MM-dd");
 }
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -23,17 +23,22 @@
 
     .page-wrapper {
         display: flex;
-        justify-content: center;
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto; /* 置中 */
+        /*display: flex;
         gap: 20px;
         padding: 20px;
-        height: 100vh;
-        box-sizing: border-box;
-        overflow: hidden;
+        width: 100%;
+        box-sizing: border-box;*/
     }
-
+        .page-wrapper .container {
+            flex: 1; /* 兩欄平均分 */
+            min-width: 400px; /* 避免太窄 */
+        }
     .container {
-        flex: 0 0 35%; /* 固定寬度為頁面寬度 35% */
-        max-width: 400px; /* 避免過寬 */
+        flex: 0 0 35%;  固定寬度為頁面寬度 35% 
+        max-width: 400px;  避免過寬 
         display: flex;
         flex-direction: column;
         background: white;
@@ -48,8 +53,10 @@
     }
 
     .diary-form-wrapper {
-        flex: none; /* 固定高度，不隨內容增長 */
+        flex: 0 0 40%;
         width: 100%;
+        padding-left: 10px;
+        overflow-y: auto;
     }
 
     .menu-icon {
@@ -76,13 +83,13 @@
     <h2 class="page-title"> 飲食紀錄</h2>
 </div>
 
-<div class="page-wrapper" style="flex:1; max-width:1000px;">
+<div class="page-wrapper">
     <!-- 歷史日記顯示(左側) -->
-    <div class="container mt-5">
+    <div class="container mt-5" style="flex: 1 1 50%; max-width: 50%;">
         <form method="get" action="/Home/DiaryIndex" class="mb-3">
             <label for="searchDate">🔍 選擇日期查看紀錄：</label>
             @*<input type="date" id="searchDate" name="date" class="form-control"
-                value="@Request.QueryString["date"]" onchange="this.form.submit()" />*@
+            value="@Request.QueryString["date"]" onchange="this.form.submit()" />*@
             <input type="date" id="searchDate" name="date" class="form-control"
                    value="@diaryDate" onchange="this.form.submit()" />
 
@@ -99,7 +106,7 @@
                 <text>所有日記紀錄：</text>
             }
         </h4>
-        <div class="diary-list-wrapper">
+        @*<div class="diary-list-wrapper">
             @if (entries != null && entries.Count > 0)
             {
                 <ul class="list-group">
@@ -128,10 +135,118 @@
             {
                 <div class="alert alert-secondary">尚無日記紀錄。</div>
             }
+        </div>*@
+        <div class="diary-list-wrapper">
+            @if (entries != null && entries.Count > 0)
+            {
+                var groupedEntries = entries
+                    .GroupBy(e => e.CreateTime.Date)
+                    .OrderByDescending(g => g.Key);
+
+                foreach (var dayGroup in groupedEntries)
+                {
+                    <div class="diary-card">
+                        <h5 class="date-title">@dayGroup.Key.ToString("yyyy-MM-dd")</h5>
+                        @{
+                            var meals = dayGroup.GroupBy(e => e.MealType);
+                        }
+                        @foreach (var mealGroup in meals)
+                        {
+                            <h6 class="meal-title">@mealGroup.Key</h6>
+                            foreach (var entry in mealGroup.OrderBy(e => e.CreateTime))
+                            {
+                                <div class="meal-entry">
+                                    <div class="meal-info">
+                                        <div><span class="text-muted"><strong>餐別： @entry.MealType</strong></span> </div>
+                                        <div>時間：@entry.CreateTime.ToString("yyyy-MM-dd HH:mm")</div>
+                                        <div>食物：@entry.Food (@entry.Quantity 份)</div>
+                                        <div class="nutrition-info">
+                                            <div>熱量: @entry.Calories kcal</div>
+                                            <div>蛋白質: @entry.Protein g</div>
+                                            <div>脂肪: @entry.Fat g</div>
+                                            <div>碳水: @entry.Carbs g</div>
+                                        </div>
+                                    </div>
+                                    <div class="meal-actions">
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteDiary(@entry.Id, this)">刪除</button>
+                                        @*<a href="@Url.Action("EditDiary", "Home", new { id = entry.Id })" class="btn btn-warning btn-sm">修改</a>*@
+                                        <button type="button" class="btn btn-warning btn-sm" onclick="location.href='@Url.Action("EditDiary", "Home", new { id = entry.Id })'">修改</button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="alert alert-secondary">尚無日記紀錄。</div>
+            }
         </div>
+
+
+        <style>
+            .diary-card {
+                background: #f0eeec;
+                border-radius: 12px;
+                padding: 15px;
+                margin-bottom: 20px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            }
+
+            .date-title {
+                font-size: 1.3rem;
+                margin-bottom: 10px;
+                border-bottom: 2px solid #eee;
+                padding-bottom: 5px;
+            }
+
+            .meal-title {
+                font-weight: 600;
+                margin-top: 15px;
+                margin-bottom: 8px;
+            }
+
+            .meal-entry {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                background: #fff;
+                padding: 12px 15px;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                border: 1px solid #eee;
+            }
+
+            .meal-info {
+                flex: 1;
+                min-width: 0; /* 防止文字超出 */
+            }
+
+            .nutrition-info {
+                font-size: 1rem;
+                display: flex;
+                gap: 15px;
+                flex-wrap: wrap;
+                margin-top: 5px;
+            }
+
+                .nutrition-info div {
+                    flex: 1 1 80px; /* 每個欄位最少 80px */
+                }
+
+            .meal-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                margin-left: 10px;
+            }
+
+        </style>
+
     </div>
     <!-- 日記輸入表單(右側) -->
-    <div class="container mt-5 diary-form-wrapper" style="max-width:400px;">
+    <div class="container mt-5 diary-form-wrapper">
         <!-- 成功/失敗訊息 -->
         @if (TempData["Msg"] != null)
         {

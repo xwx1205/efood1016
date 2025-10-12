@@ -435,10 +435,10 @@ namespace PetShop.Controllers
             DateTime nextDay = selectedDate.AddDays(1); // 取得隔天
 
             // 用範圍比對，不用 .Date
-            var entries = db.DiaryEntries
-                            .Where(e => e.CreateTime >= selectedDate && e.CreateTime < nextDay)
-                            .OrderByDescending(e => e.CreateTime)
-                            .ToList();
+            //var entries = db.DiaryEntries
+            //                .Where(e => e.CreateTime >= selectedDate && e.CreateTime < nextDay)
+            //                .OrderByDescending(e => e.CreateTime)
+            //                .ToList();
 
             string account = Session["LoginUser"]?.ToString();
             List<DiaryEntry> userDiaries = new List<DiaryEntry>();
