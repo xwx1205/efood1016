@@ -60,7 +60,6 @@
         padding-left: 10px;
         overflow-y: auto;
     }
-
     .menu-icon {
         width: 65px; /* 可依需求調整 */
         height: 65px;
@@ -141,6 +140,7 @@
         <div class="diary-list-wrapper">
             @if (entries != null && entries.Count > 0)
             {
+                var mealOrder = new List<string> { "早餐", "午餐", "晚餐", "點心" };
                 var groupedEntries = entries
                     .GroupBy(e => e.CreateTime.Date)
                     .OrderByDescending(g => g.Key);
@@ -150,11 +150,13 @@
                     <div class="diary-card">
                         <h5 class="date-title">@dayGroup.Key.ToString("yyyy-MM-dd")</h5>
                         @{
-                            var meals = dayGroup.GroupBy(e => e.MealType);
+                            var meals = dayGroup
+                                .GroupBy(e => e.MealType)
+                                .OrderBy(g => mealOrder.IndexOf(g.Key));
                         }
                         @foreach (var mealGroup in meals)
                         {
-                            <h6 class="meal-title">@mealGroup.Key</h6>
+                            @*<h6 class="meal-title">@mealGroup.Key</h6>*@
                             foreach (var entry in mealGroup.OrderBy(e => e.CreateTime))
                             {
                                 <div class="meal-entry">
@@ -170,9 +172,9 @@
                                         </div>
                                     </div>
                                     <div class="meal-actions">
+                                        <button type="button" class="btn btn-warning btn-sm" onclick="location.href='@Url.Action("EditDiary", "Home", new { id = entry.Id })'">修改</button>
                                         <button type="button" class="btn btn-danger btn-sm" onclick="deleteDiary(@entry.Id, this)">刪除</button>
                                         @*<a href="@Url.Action("EditDiary", "Home", new { id = entry.Id })" class="btn btn-warning btn-sm">修改</a>*@
-                                        <button type="button" class="btn btn-warning btn-sm" onclick="location.href='@Url.Action("EditDiary", "Home", new { id = entry.Id })'">修改</button>
                                     </div>
                                 </div>
                             }
@@ -196,10 +198,13 @@
             }
 
             .date-title {
-                font-size: 1.3rem;
+                margin-top: 0; /* 把上方空白拿掉 */
+                margin-bottom: 10px; /* 下方留一點距離，看起來不會太擠 */
+                font-weight: bold;
+                /*font-size: 1.3rem;
                 margin-bottom: 10px;
                 border-bottom: 2px solid #eee;
-                padding-bottom: 5px;
+                padding-bottom: 5px;*/
             }
 
             .meal-title {
@@ -434,22 +439,40 @@
     //    }
     //});
 
-    document.getElementById('commonSelect').addEventListener('change', function () {
-        var selected = this.options[this.selectedIndex];
-        var category = selected.parentElement.label;
-        var calories = selected.getAttribute('data-calories');
-        var calories = selected.getAttribute('data-calories');
-        var protein = selected.getAttribute('data-protein');
-        var fat = selected.getAttribute('data-fat');
-        var carb = selected.getAttribute('data-carb');
-        if (calories && calories !== "其他") {
-            document.getElementById('caloriesInput').value = calories;
-            document.getElementById('proteinInput').value = protein;
-            document.getElementById('fatInput').value = fat;
-            document.getElementById('carbInput').value = carb;
-        }
-    });
+        document.getElementById('commonSelect').addEventListener('change', function () {
+            var selected = this.options[this.selectedIndex];
+            var category = selected.parentElement.label;
+            var calories = selected.getAttribute('data-calories');
+            var calories = selected.getAttribute('data-calories');
+            var protein = selected.getAttribute('data-protein');
+            var fat = selected.getAttribute('data-fat');
+            var carb = selected.getAttribute('data-carb');
+            if (calories && calories !== "其他") {
+                document.getElementById('caloriesInput').value = calories;
+                document.getElementById('proteinInput').value = protein;
+                document.getElementById('fatInput').value = fat;
+                document.getElementById('carbInput').value = carb;
+            }
+        });
 
+        function deleteDiary(id, btn) {
+            console.log("前端傳入的 id:", id);
+            if (!confirm('確定要刪除嗎？')) return;
+            fetch('/Home/DeleteDiary', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'id=' + encodeURIComponent(id)
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        btn.closest(".meal-entry").remove();
+                        location.reload(); // 刪除後刷新頁面
+                    } else {
+                        alert("刪除失敗，找不到資料");
+                    }
+                });
+        }
     function deleteDiary(id, btn) {
         console.log("前端傳入的 id:", id);
         if (!confirm('確定要刪除嗎？')) return;

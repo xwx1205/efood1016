@@ -9,6 +9,16 @@
         <form method="post" action="/Home/EditDiary">
             <input type="hidden" name="Id" value="@Model.Id" />
             <div class="form-group">
+                <label>餐別</label>
+                <select name="MealType" class="form-control" required>
+                    <option value="">-- 請選擇餐別 --</option>
+                    <option value="早餐" @(Model.MealType == "早餐" ? "selected" : "")>早餐</option>
+                    <option value="午餐" @(Model.MealType == "午餐" ? "selected" : "")>午餐</option>
+                    <option value="晚餐" @(Model.MealType == "晚餐" ? "selected" : "")>晚餐</option>
+                    <option value="點心" @(Model.MealType == "點心" ? "selected" : "")>點心</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label>食物</label>
                 <input type="text" name="Food" class="form-control" value="@Model.Food" />
             </div>
