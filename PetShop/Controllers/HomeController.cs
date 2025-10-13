@@ -372,11 +372,9 @@ namespace PetShop.Controllers
             string Category = Request["Category"]?.ToString();
             string MealType = Request["MealType"]?.ToString();
             string food = "";
-            if (!string.IsNullOrEmpty(Request["Food"]) && Request["Food"] != "其他")
-                food = Request["Food"];
-            else if (!string.IsNullOrEmpty(Request["CommonFood"]) && Request["CommonFood"] != "其他")
+            if (!string.IsNullOrEmpty(Request["CommonFood"]) && Request["CommonFood"] != "其他")
                 food = Request["CommonFood"];
-            else if (Request["Food"] == "其他" || Request["CommonFood"] == "其他")
+            else if (Request["CommonFood"] == "其他")
                 food = Request["FoodOther"];
             int calories = 0, quantity=0;
             int.TryParse(Request["Quantity"], out quantity);
@@ -442,7 +440,7 @@ namespace PetShop.Controllers
 
             string account = Session["LoginUser"]?.ToString();
             List<DiaryEntry> userDiaries = new List<DiaryEntry>();
-            List<Food> foodList = new List<Food>();
+            //List<Food> foodList = new List<Food>();
             List<CommonFood> commonFoods = new List<CommonFood>();
 
             try
@@ -488,23 +486,23 @@ namespace PetShop.Controllers
                 }
                 reader.Close();
 
-                // 取得 Food 資料
-                string foodSql = "SELECT * FROM Food";
-                SqlCommand foodCmd = new SqlCommand(foodSql, X);
-                SqlDataReader foodReader = foodCmd.ExecuteReader();
-                while (foodReader.Read())
-                {
-                    foodList.Add(new Food
-                    {
-                        Name = foodReader["Name"].ToString(),
-                        Category = foodReader["Category"].ToString(),
-                        Calories = Convert.ToInt32(foodReader["Calories"]),
-                        Protein = Convert.ToInt32(foodReader["Protein"]),
-                        Fat = Convert.ToInt32(foodReader["Fat"]),
-                        Carbs = Convert.ToInt32(foodReader["Carbs"])
-                    });
-                }
-                foodReader.Close();
+                //// 取得 Food 資料
+                //string foodSql = "SELECT * FROM Food";
+                //SqlCommand foodCmd = new SqlCommand(foodSql, X);
+                //SqlDataReader foodReader = foodCmd.ExecuteReader();
+                //while (foodReader.Read())
+                //{
+                //    foodList.Add(new Food
+                //    {
+                //        Name = foodReader["Name"].ToString(),
+                //        Category = foodReader["Category"].ToString(),
+                //        Calories = Convert.ToInt32(foodReader["Calories"]),
+                //        Protein = Convert.ToInt32(foodReader["Protein"]),
+                //        Fat = Convert.ToInt32(foodReader["Fat"]),
+                //        Carbs = Convert.ToInt32(foodReader["Carbs"])
+                //    });
+                //}
+                //foodReader.Close();
 
                 // 取得 CommonFood 資料
                 string CommonSql = "SELECT * FROM CommonFoods";
@@ -531,7 +529,7 @@ namespace PetShop.Controllers
             ViewBag.Account = account;
             ViewBag.UserDiaries = userDiaries;
             ViewBag.SelectedDate = selectedDate.ToString("yyyy-MM-dd");
-            ViewBag.FoodList = foodList;
+            //ViewBag.FoodList = foodList;
             ViewBag.CommonFoods = commonFoods;
             return View("~/Views/Diary/DiaryArea.cshtml");
         }
