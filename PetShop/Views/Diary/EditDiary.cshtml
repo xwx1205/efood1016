@@ -23,7 +23,7 @@
                 <input type="text" name="Food" class="form-control" value="@Model.Food" />
             </div>
             <div class="form-group">
-                <label>份數</label>
+                <label>數量</label>
                 <input type="number" name="Quantity" class="form-control" value="@Model.Quantity" />
             </div>
             <div class="form-group">
@@ -48,28 +48,3 @@
         </form>
     </div>
 </div>
-
-<script>
-    // 取得原本數量
-    let originalQty = parseInt(document.querySelector('input[name="Quantity"]').value) || 1;
-    // 取得原本總營養成分
-    let baseCalories = parseFloat(document.querySelector('input[name="Calories"]').value) || 0;
-    let baseProtein = parseFloat(document.querySelector('input[name="Protein"]').value) || 0;
-    let baseFat = parseFloat(document.querySelector('input[name="Fat"]').value) || 0;
-    let baseCarbs = parseFloat(document.querySelector('input[name="Carbs"]').value) || 0;
-
-    // 計算每份營養成分
-    let perCalories = baseCalories / originalQty;
-    let perProtein = baseProtein / originalQty;
-    let perFat = baseFat / originalQty;
-    let perCarbs = baseCarbs / originalQty;
-
-    // 綁定數量欄位事件
-    document.querySelector('input[name="Quantity"]').addEventListener('input', function () {
-        let qty = parseInt(this.value) || 1;
-        document.querySelector('input[name="Calories"]').value = Math.round(perCalories * qty);
-        document.querySelector('input[name="Protein"]').value = Math.round(perProtein * qty);
-        document.querySelector('input[name="Fat"]').value = Math.round(perFat * qty);
-        document.querySelector('input[name="Carbs"]').value = Math.round(perCarbs * qty);
-    });
-</script>
