@@ -3,17 +3,13 @@
 <div class="container">
     <h2>會員資料修改</h2>
 
-
     <style>
-       
         body {
             background: linear-gradient(rgba(249,249,249,0.7), rgba(233,239,245,0.7)), url('/Image/food2.png') no-repeat center center fixed;
             background-size: cover;
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
         }
-    
-
 
         .container {
             background: rgba(255, 255, 255, 0.95);
@@ -21,40 +17,48 @@
             border-radius: 12px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.08);
             width: 440px;
-            text-align: left;
+            margin: 50px auto;
         }
 
             .container h2 {
                 text-align: center;
                 color: #333;
                 margin-bottom: 20px;
-                margin-top: -20px;
             }
 
-        /* 每一列對齊樣式 */
         .form-row {
             display: flex;
             align-items: center;
-            margin-bottom: 12px;
+            justify-content: space-evenly;
+            margin-bottom: 15px;
         }
 
-            .form-row strong {
-                width: 80px;
-                flex-shrink: 0;
+            .form-row label {
+                flex: 0 0 60px; /* 固定標籤寬度，讓對齊整齊 */
+                text-align: right;
+                margin-right: 8px;
+                font-weight: bold;
                 color: #333;
             }
 
             .form-row input[type="text"],
-            .form-row input[type="date"],
-            .form-row input[type="file"] {
-                flex: 1;
+            .form-row input[type="file"],
+            .form-row input[type="date"]
+            .readonly-input {
+                flex: 0.8;
                 padding: 6px 10px;
                 border: 1px solid #ccc;
                 border-radius: 6px;
                 font-size: 14px;
+                text-align: left;
+            }
+            .readonly-input {
+            background-color: #f5f5f5;
+            color: #333;
+            cursor: not-allowed;
             }
 
-        .profile-photo {
+        img.profile-photo {
             width: 100px;
             height: 100px;
             border-radius: 50%;
@@ -74,13 +78,17 @@
             border-radius: 8px;
             cursor: pointer;
             transition: 0.3s;
+            font-size: 16px;
+            width: 80%;
         }
 
             .btn-primary:hover {
                 background-color: #737373;
             }
-    </style>
 
+        
+
+    </style>
 
     @if (Model != null)
     {
@@ -88,40 +96,45 @@
         {
             @Html.HiddenFor(m => m.RegisterAccount)
 
-            <p>
-                <strong>個人檔案照片</strong><br />
-                <img src="~/Photo/@Model.ImageName" alt="會員照片" style="width:100px;height:100px;border-radius:50%;object-fit:cover;" /><br />
+            <div class="form-row" style="justify-content: center;">
+                <img class="profile-photo" src="~/Photo/@Model.ImageName" alt="會員照片" />
+            </div>
+
+            <div class="form-row">
+                <label>照片</label>
                 <input type="file" name="ImageFile" />
-            </p>
+            </div>
 
-            <p>
-                <strong>帳號：</strong>@Model.RegisterAccount
-                @Html.HiddenFor(m => m.RegisterAccount) <!-- 帳號不能修改，用 Hidden 傳回 -->
-            </p>
-            <p>
-                <strong>姓名：</strong>
+            <div class="form-row">
+                <label>帳號</label>
+                @Html.TextBoxFor(m => m.RegisterAccount, new { @readonly = "readonly", @class = "readonly-input" })
+            </div>
+
+
+            <div class="form-row">
+                <label>姓名</label>
                 @Html.TextBoxFor(m => m.RegisterRealName)
-            </p>
-            <p>
-                <strong>電話：</strong>
+            </div>
+
+            <div class="form-row">
+                <label>電話</label>
                 @Html.TextBoxFor(m => m.RegisterPhone)
-            </p>
+            </div>
 
-
-            <p>
-                <strong>生日：</strong>
+            <div class="form-row">
+                <label>生日</label>
                 @Html.TextBoxFor(m => m.RegisterBirthday, new { type = "text" })
-            </p>
+            </div>
 
-
-            <p>
-                <strong>身高：</strong>
+            <div class="form-row">
+                <label>身高</label>
                 @Html.TextBoxFor(m => m.RegisterHeight)
-            </p>
-            <p>
-                <strong>體重：</strong>
+            </div>
+
+            <div class="form-row">
+                <label>體重</label>
                 @Html.TextBoxFor(m => m.RegisterWeight)
-            </p>
+            </div>
 
             <button type="submit" class="btn btn-primary">更新資料</button>
         }
@@ -130,5 +143,4 @@
     {
         <p>找不到會員資料。</p>
     }
-   
 </div>

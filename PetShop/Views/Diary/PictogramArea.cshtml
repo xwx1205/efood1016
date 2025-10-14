@@ -12,6 +12,7 @@
     }
 </style>
 
+
 <div id="MyArea">
     <h3>每日餐點熱量分析<button onclick="Invoice()">分析</button></h3>
     <div id="X"></div>
@@ -36,22 +37,22 @@
     var MyData = {
         type: "bar",
         data: {
-            labels:[],
+            labels: [],
             datasets:
-            [
-                {
-                    label: "熱量(卡)",
-                    data: [],
-                    borderWidth: 5,
-                    borderColor: [
-                        'yellow',
+                [
+                    {
+                        label: "熱量(卡)",
+                        data: [],
+                        borderWidth: 5,
+                        borderColor: [
+                            'yellow',
 
-                    ],
-                    backgroundColor:["red"],
-                },
-            ]
+                        ],
+                        backgroundColor: ["red"],
+                    },
+                ]
         },
     };
-var MyChart = new Chart(MyCanvas, MyData);
+    var MyChart = new Chart(MyCanvas, MyData);
 </script>
 

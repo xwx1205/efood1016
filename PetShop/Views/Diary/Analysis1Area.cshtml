@@ -1,4 +1,72 @@
-﻿@{
+﻿<!-- 🔧 Select2 樣式 & jQuery -->
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</head>
+
+<style>
+    .page-title {
+        text-align: left;
+        margin-left: 10px;
+    }
+
+    .menu-icon {
+        width: 65px;
+        height: 65px;
+        border-radius: 5px;
+        text-align: left;
+        justify-content: flex-start;
+    }
+
+    .card {
+        background: #f0eeec;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 200px;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Select2 選單與圖片樣式強化 */
+    .select2-container--default .select2-selection--single {
+        height: 50px;
+        display: flex;
+        align-items: center;
+        font-size: 18px;
+        box-sizing: border-box;
+    }
+
+    .select2-container {
+        width: 450px !important; /* ✅ 統一整體寬度 */
+    }
+
+    .select2-results__option img,
+    .select2-selection__rendered img {
+        height: 30px;
+        width: 30px;
+        margin-right: 10px;
+        vertical-align: middle;
+    }
+
+    .select2-results__option {
+        font-size: 18px;
+        padding: 10px 15px;
+    }
+
+    .select2-selection__rendered {
+        font-size: 18px;
+        padding-left: 10px;
+    }
+</style>
+
+<div class="card">
+    <img src="~/Image/飲食分析icon.png" alt="飲食分析icon" class="menu-icon">
+    <h2 class="page-title"> 飲食分析</h2>
+</div>
+
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewBag.Title = "一周飲食統計";
 
@@ -8,82 +76,95 @@
     var nutrients = ViewBag.Nutrients as dynamic;
 }
 
-<!-- 方框 + 七天餐點資料 -->
+<!-- 主體畫面 -->
 <div style="display: flex; height: 70vh;">
-    <!-- 左半邊：兩個方框 -->
+    <!-- 左邊卡片 -->
     <div style="flex: 1; padding: 30px; display: flex; flex-direction: column; align-items: flex-start;">
-        <h2 style="margin: 0 0 20px 0; align-self: flex-start;">一周飲食統計</h2>
+        <h2 style="margin: 0 0 20px 0;">一周飲食統計</h2>
         <div style="display: flex; justify-content: space-between; flex: 1; width: 100%; max-width: calc(50vw - 60px); gap: 20px;">
-            <!-- 本週平均熱量 -->
+            <!-- 平均熱量卡片 -->
             <div style="flex: 1; border: 2px solid #ccc; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
-                <h3 style="margin: 0 0 10px 0; font-size: 20px;">本週平均熱量</h3>
+                <h3 style="margin: 0 0 10px 0;">本週平均熱量</h3>
                 <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
                     <span style="font-size: 48px; font-weight: bold;">@averageCalories</span>
                 </div>
                 <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">kcal</div>
             </div>
-            <!-- 本週總營養素 -->
+            <!-- 營養素卡片 -->
             <div style="flex: 1; border: 2px solid #ccc; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
-                <h3 style="margin: 0 0 10px 0; font-size: 20px;">本週總營養素</h3>
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 24px; font-weight: bold;">
+                <h3 style="margin: 0 0 10px 0;">本週總營養素</h3>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                     <span style="font-size: 48px; font-weight: bold;">0</span>
-                        <!-- <div>碳水化合物: @nutrients?.Carbs</div> -->
-                        <!-- <div>脂肪: @nutrients?.Fat</div> -->
-                        <!-- <div>蛋白質: @nutrients?.Protein</div> -->
-</div>
-                    <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">g</div>
                 </div>
+                <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">g</div>
+            </div>
         </div>
     </div>
 
-    <!-- 右半邊：七天紀錄 -->
-                    <div style="flex: 1; padding: 30px;">
-                        <!-- 頁面跳轉選單 -->
-                        <div style="margin-bottom: 20px;">
-                            <select id="pageSelect" style="font-size:18px; padding:5px;">
-                                <option value="">--- 請選擇頁面 ---</option>
-                                <option value="@Url.Action("Analysis1Index", "Home")" selected>一周飲食統計</option>
-                                <option value="@Url.Action("Analysis2Index", "Home")">每日熱量趨勢</option>
-                                <option value="@Url.Action("Analysis3Index", "Home")">營養比例分析</option>
-                            </select>
-                        </div>
-                        <!-- 日期選擇 -->
-                        <div style="margin-bottom: 20px;">
-                            <label>選擇日期：</label>
-                            <input type="date" id="analysisDate" value="@selectedDate" />
-                        </div>
-                        <h3>近七天餐點記錄</h3>
-                        <ul style="font-size: 18px; list-style: none; padding-left: 0;">
-                            @if (weekData != null && weekData.Count > 0)
-                            {
-                                foreach (var item in weekData)
-                                {
-                                    <li>@item.Key ：@item.Value</li>
-                                }
-                            }
-                            else
-                            {
-                                <li>尚無資料</li>
-                            }
-                        </ul>
-                    </div>
-                </div>
+    <!-- 右邊資料區 -->
+    <div style="flex: 1; padding: 30px;">
+        <!-- ✅ 頁面跳轉選單 -->
+        <div style="margin-bottom: 20px;">
+            <select id="pageSelect" style="width: 450px;">
+                <option value="">--- 請選擇頁面 ---</option>
+                <option value="@Url.Action("Analysis1Index", "Home")" data-icon="@Url.Content("~/Image/一周飲食統計icon.png")" selected>一周飲食統計</option>
+                <option value="@Url.Action("Analysis2Index", "Home")" data-icon="@Url.Content("~/Image/每日熱量趨勢icon.png")">每日熱量趨勢</option>
+                <option value="@Url.Action("Analysis3Index", "Home")" data-icon="@Url.Content("~/Image/營養比例分析icon.png")">營養比例分析</option>
+            </select>
+        </div>
 
-<!-- JS區域 -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <!-- 日期選擇 -->
+        <div style="margin-bottom: 20px;">
+            <label>選擇日期：</label>
+            <input type="date" id="analysisDate" value="@selectedDate" />
+        </div>
 
+        <!-- 七天記錄 -->
+        <h3>近七天餐點記錄</h3>
+        <ul style="font-size: 18px; list-style: none; padding-left: 0;">
+            @if (weekData != null && weekData.Count > 0)
+            {
+                foreach (var item in weekData)
+                {
+                    <li>@item.Key ：@item.Value</li>
+                }
+            }
+            else
+            {
+                <li>尚無資料</li>
+            }
+        </ul>
+    </div>
+</div>
+
+<!-- ✅ Select2 初始化 -->
 <script>
-    // 頁面跳轉
-    $('#pageSelect').change(function () {
-        var url = $(this).val();
-        if (url) window.location.href = url;
-    });
-
-    // 日期改變時自動跳轉
-    $('#analysisDate').change(function () {
-        var newDate = $(this).val();
-        if (newDate) {
-            window.location.href = '/Home/Analysis1Index?selectedDate=' + newDate;
+    $(document).ready(function () {
+        function formatOption(option) {
+            if (!option.id) return option.text; // 不處理 placeholder
+            var iconUrl = $(option.element).data('icon');
+            if (!iconUrl) return option.text;
+            return $('<span><img src="' + iconUrl + '" style="height:30px; width:30px; margin-right:10px;">' + option.text + '</span>');
         }
+
+        $('#pageSelect').select2({
+            width: 'style', // ✅ 這行最重要，解決 placeholder 格子寬度問題
+            templateResult: formatOption,
+            templateSelection: formatOption
+        });
+
+        // 頁面跳轉
+        $('#pageSelect').on('change', function () {
+            var url = $(this).val();
+            if (url) window.location.href = url;
+        });
+
+        // 日期變更跳轉
+        $('#analysisDate').on('change', function () {
+            var newDate = $(this).val();
+            if (newDate) {
+                window.location.href = '/Home/Analysis1Index?selectedDate=' + newDate;
+            }
+        });
     });
 </script>
