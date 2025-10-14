@@ -1,6 +1,6 @@
 ﻿@{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewBag.Title = "目標設定";
+    //ViewBag.Title = "目標設定";
 
     // 從 ViewBag 取得會員資料（由 HomeController 傳入）
     var member = ViewBag.Member as PetShop.Models.RegisterUser ?? new PetShop.Models.RegisterUser
@@ -36,6 +36,32 @@
     double bmr = 10 * member.RegisterWeight + 6.25 * member.RegisterHeight - 5 * assumedAge + 5;
     double dailyCalories = Math.Round(bmr * 1.55, 0); // 中度活動係數
 }
+<style>
+    .page-title {
+        text-align: left; /* 水平靠左 */
+        margin-left: 10px; /* 可選，與 page-wrapper 左側對齊 */
+    }
+    .menu-icon {
+        width: 65px; /* 可依需求調整 */
+        height: 65px;
+        border-radius: 5px;
+        text-align: left;
+        justify-content: flex-start
+    }
+    .card {
+        background: #f0eeec;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 200px;
+        display: flex;
+        justify-content: center;
+    }
+</style>
+<div class="card">
+    <img src="~/Image/目標設定icon.png" alt="目標設定icon" class="menu-icon">
+    <h2 class="page-title"> 目標設定</h2>
+</div>
 
 <!-- 主內容區：兩欄式版面 -->
 <div style="display: flex; height: 70vh; width: 95%; margin: 0 auto; padding: 0; position: relative; z-index: 1;">

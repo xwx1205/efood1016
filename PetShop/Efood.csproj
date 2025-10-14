@@ -200,6 +200,9 @@
     <Content Include="Content\Site.css" />
     <Content Include="Image\food.png" />
     <Content Include="Image\food2.png" />
+    <Content Include="Image\一周飲食統計icon.png" />
+    <Content Include="Image\每日熱量趨勢icon.png" />
+    <Content Include="Image\營養比例分析icon.png" />
     <Content Include="Image\目標設定.png" />
     <Content Include="Image\目標設定icon.png" />
     <Content Include="Image\飲食分析.png" />
