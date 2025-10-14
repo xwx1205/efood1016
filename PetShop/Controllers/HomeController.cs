@@ -376,10 +376,10 @@ namespace PetShop.Controllers
                 food = Request["CommonFood"];
             else if (Request["CommonFood"] == "其他")
                 food = Request["FoodOther"];
-            int calories = 0, quantity=0;
+            int quantity = 0;
             int.TryParse(Request["Quantity"], out quantity);
-            int.TryParse(Request["Calories"], out calories);
-            decimal protein = 0, fat = 0, carbs = 0;
+            decimal calories = 0, protein = 0, fat = 0, carbs = 0;
+            decimal.TryParse(Request["Calories"], out calories);
             decimal.TryParse(Request["Protein"], out protein);
             decimal.TryParse(Request["Fat"], out fat);
             decimal.TryParse(Request["Carbs"], out carbs);
@@ -474,7 +474,7 @@ namespace PetShop.Controllers
                         Id = reader["Id"] != DBNull.Value ? Convert.ToInt32(reader["Id"]) : 0,
                         CreateTime = reader["CreateTime"] != DBNull.Value ? Convert.ToDateTime(reader["CreateTime"]) : DateTime.MinValue,
                         Food = reader["Food"] != DBNull.Value ? reader["Food"].ToString() : "",
-                        Calories = reader["Calories"] != DBNull.Value ? Convert.ToInt32(reader["Calories"]) : 0,
+                        Calories = reader["Calories"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Calories"]) : null,
                         Protein = reader["Protein"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Protein"]) : null,
                         Fat = reader["Fat"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Fat"]) : null,
                         Carbs = reader["Carbs"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Carbs"]) : null,
@@ -514,7 +514,7 @@ namespace PetShop.Controllers
                     {
                         Name = CommonReader["Name"].ToString(),
                         Category = CommonReader["Category"].ToString(),
-                        Calories = Convert.ToInt32(CommonReader["Calories"]),
+                        Calories = CommonReader["Calories"] != DBNull.Value ? (decimal?)Convert.ToDecimal(CommonReader["Calories"]) : null,
                         Protein = CommonReader["Protein"] != DBNull.Value ? (decimal?)Convert.ToDecimal(CommonReader["Protein"]) : null,
                         Fat = CommonReader["Fat"] != DBNull.Value ? (decimal?)Convert.ToDecimal(CommonReader["Fat"]) : null,
                         Carbs = CommonReader["Carbs"] != DBNull.Value ? (decimal?)Convert.ToDecimal(CommonReader["Carbs"]) : null
@@ -550,7 +550,7 @@ namespace PetShop.Controllers
                     {
                         Id = (int)reader["Id"],
                         Food = reader["Food"].ToString(),
-                        Calories = Convert.ToInt32(reader["Calories"]),
+                        Calories = reader["Calories"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Calories"]) : null,
                         Protein = reader["Protein"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Protein"]) : null,
                         Fat = reader["Fat"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Fat"]) : null,
                         Carbs = reader["Carbs"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Carbs"]) : null,
@@ -726,68 +726,68 @@ namespace PetShop.Controllers
             ViewBag.Meals = meals;
             return View("~/Views/Diary/MealArea.cshtml");
         }
-        public JsonResult Invoice()
-        {
-            String P = "Vote Success";
-            var candidates = new List<object>();
+        //public JsonResult Invoice()
+        //{
+        //    String P = "Vote Success";
+        //    var candidates = new List<object>();
 
-            try
-            {
-                X.Open();
-                string G = "select * from[Pictogram]";
-                SqlCommand Q = new SqlCommand(G, X);
-                Q.ExecuteNonQuery();
-                SqlDataReader R = Q.ExecuteReader();
-                while (R.Read() == true)
-                {
-                    string MyName = Convert.ToString(R["Candidate"]);
-                    int MyVotes = Convert.ToInt16(R["Count"]);
-                    candidates.Add(new
-                    {
-                        Name = MyName,
-                        Votes = MyVotes
-                    });
-                }
-            }
-            catch (Exception) { }
-            finally { X.Close(); }
-            return Json(new { P, Q = candidates }, JsonRequestBehavior.AllowGet);
-        }
-        public JsonResult GetAllMealRecords()
-        {
-            string account = Session["LoginUser"]?.ToString();
-            if (string.IsNullOrEmpty(account))
-            {
-                return Json(new { success = false, message = "未登入" }, JsonRequestBehavior.AllowGet);
-            }
+        //    try
+        //    {
+        //        X.Open();
+        //        string G = "select * from[Pictogram]";
+        //        SqlCommand Q = new SqlCommand(G, X);
+        //        Q.ExecuteNonQuery();
+        //        SqlDataReader R = Q.ExecuteReader();
+        //        while (R.Read() == true)
+        //        {
+        //            string MyName = Convert.ToString(R["Candidate"]);
+        //            int MyVotes = Convert.ToInt16(R["Count"]);
+        //            candidates.Add(new
+        //            {
+        //                Name = MyName,
+        //                Votes = MyVotes
+        //            });
+        //        }
+        //    }
+        //    catch (Exception) { }
+        //    finally { X.Close(); }
+        //    return Json(new { P, Q = candidates }, JsonRequestBehavior.AllowGet);
+        //}
+        //public JsonResult GetAllMealRecords()
+        //{
+        //    string account = Session["LoginUser"]?.ToString();
+        //    if (string.IsNullOrEmpty(account))
+        //    {
+        //        return Json(new { success = false, message = "未登入" }, JsonRequestBehavior.AllowGet);
+        //    }
 
-            var meals = new List<object>();
+        //    var meals = new List<object>();
 
-            try
-            {
-                X.Open();
-                string sql = "SELECT MealType, Choice, ChoiceDate FROM MealChoice WHERE Account=@Account ORDER BY ChoiceDate DESC";
-                SqlCommand cmd = new SqlCommand(sql, X);
-                cmd.Parameters.AddWithValue("@Account", account);
+        //    try
+        //    {
+        //        X.Open();
+        //        string sql = "SELECT MealType, Choice, ChoiceDate FROM MealChoice WHERE Account=@Account ORDER BY ChoiceDate DESC";
+        //        SqlCommand cmd = new SqlCommand(sql, X);
+        //        cmd.Parameters.AddWithValue("@Account", account);
 
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    meals.Add(new
-                    {
-                        日期 = Convert.ToDateTime(reader["ChoiceDate"]).ToString("yyyy-MM-dd"),
-                        餐別 = reader["MealType"].ToString(),
-                        餐點 = reader["Choice"].ToString()
-                    });
-                }
-                reader.Close();
-            }
-            finally
-            {
-                X.Close();
-            }
-            return Json(new { success = true, data = meals }, JsonRequestBehavior.AllowGet);
-        }
+        //        SqlDataReader reader = cmd.ExecuteReader();
+        //        while (reader.Read())
+        //        {
+        //            meals.Add(new
+        //            {
+        //                日期 = Convert.ToDateTime(reader["ChoiceDate"]).ToString("yyyy-MM-dd"),
+        //                餐別 = reader["MealType"].ToString(),
+        //                餐點 = reader["Choice"].ToString()
+        //            });
+        //        }
+        //        reader.Close();
+        //    }
+        //    finally
+        //    {
+        //        X.Close();
+        //    }
+        //    return Json(new { success = true, data = meals }, JsonRequestBehavior.AllowGet);
+        //}
         public ActionResult PictogramIndex()
         {
             string account = Session["LoginUser"]?.ToString();
