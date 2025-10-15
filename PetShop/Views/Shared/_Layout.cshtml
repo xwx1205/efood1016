@@ -1,29 +1,17 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewBag.Title - efood</title>
+
     <style>
-        .S {
-            color: red;
-        }
-
-        .P {
-            color: gray;
-        }
-
-        #A {
-            color: gray;
-        }
-
-        .N {
-            border: none;
-            background-color: white;
-            font-size: small;
-            text-decoration: underline;
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #f9f9f9, #e9eff5);
         }
 
         header {
@@ -38,23 +26,29 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
 
-        main {
-            height: calc(100vh - 100px);
-            padding-bottom: 40px;
+        /* 頂部連結 */
+        .top-links {
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+            width: 100%;
+            padding-right: 30px;
         }
 
-        html, body {
-            height: 100%;
-            padding: 0;
-        }
+            .top-links a {
+                color: #565b5e;
+                font-size: 16px;
+                text-decoration: none;
+                font-weight: bold;
+                transition: color 0.3s;
+            }
 
-        body {
-            background: linear-gradient(to right, #f9f9f9, #e9eff5);
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f0f7f3;
-            text-align: center;
-        }
+                .top-links a:hover {
+                    color: #8e8480;
+                    text-decoration: underline;
+                }
 
+        /* 頁尾 */
         h6 {
             position: fixed;
             bottom: 0;
@@ -66,31 +60,98 @@
             z-index: 100;
         }
 
-        .top-links a {
-            color: #565b5e; /* 預設字體顏色 */
-            font-size: 16px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: color 0.3s;
+        /* ===== 側邊欄 ===== */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 230px;
+            height: 100%;
+            background-color: #8e8480;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(-230px);
+            transition: transform 0.3s ease;
+            z-index: 999;
         }
 
-            .top-links a:hover {
-                color: #8e8480; /* 滑鼠移過去的顏色 */
-                text-decoration: underline;
+            #sidebar.open {
+                transform: translateX(0);
             }
-    </style>
-    <style>
-        .container {
-            position: relative;
-            width: 80%;
-            max-width: 800px;
-            margin: 0 auto;
-            text-align: center;
-            background-color: white;
+
+        /* ☰ 按鈕 */
+        .toggle-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: none;
+            border: none;
+            color: #444;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        /* 選單內容 */
+        .menu {
+            margin-top: 80px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+            .menu-item:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .menu-item img {
+                width: 45px;
+                height: 45px;
+                margin-right: 12px;
+            }
+
+        /* 子選單 */
+        .submenu {
+            display: none;
+            flex-direction: column;
+            margin-left: 35px;
+            border-left: 1px solid rgba(255,255,255,0.3);
+            padding-left: 10px;
+        }
+
+        .submenu-item {
+            color: #ccc;
+            font-size: 14px;
+            padding: 6px 0;
+            text-decoration: none;
+        }
+
+            .submenu-item:hover {
+                color: #fff;
+            }
+
+            .submenu-item img {
+                width: 30px;
+                height: 30px;
+                margin-right: 6px;
+            }
+
+        .parent-item {
+            cursor: pointer;
+        }
+
+        /* 主內容區 */
+        .main-content {
             padding: 20px;
-            border-radius: 12px;
-            font-size: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
 
         /* 頭像 + tooltip */
@@ -140,47 +201,95 @@
             }
     </style>
 </head>
+
 <body>
     <header>E-食代</header>
-    <div class="top-links" style="display: flex; justify-content: flex-end; gap: 20px; width: 100%; padding-right: 30px;">
 
+    <div class="top-links">
         @if (Session["LoginUser"] == null)
         {
             @Html.ActionLink("登入/註冊", "LeaveHome", null, new { @class = "nav-link" })
         }
         else
         {
-            @* 登出選項也可以放這 *@
             @Html.ActionLink("登出", "Logout", null, new { @class = "nav-link" })
         }
 
         @Html.ActionLink("回首頁", "Index", null, new { @class = "nav-link" })
     </div>
 
+    @if (Session["LoginUser"] != null)
+    {
+        <!-- ☰ 按鈕 -->
+        <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
 
-    @RenderBody()
-    <h6>版權所有，抄襲必究</h6>
+        <!-- 側邊欄 -->
+        <div id="sidebar">
+            <div class="menu">
+                <a href="@Url.Action("DiaryIndex", "Home")" class="menu-item">
+                    <img src="~/Image/飲食紀錄icon.png" alt="">
+                    <span>飲食紀錄</span>
+                </a>
+                <a href="@Url.Action("ObjectiveIndex", "Home")" class="menu-item">
+                    <img src="~/Image/目標設定icon.png" alt="">
+                    <span>目標設定</span>
+                </a>
 
-    <div style=" justify-content: center; gap: 20px;">
-        @* 右上角頭像 + Tooltip *@
-        @if (Session["LoginUser"] != null && Session["ImageName"] != null)
-        {
-            <div class="profile-container">
-                <img src="@Url.Content("~/Photo/" + Session["ImageName"])"
-                     alt="會員照片"
-                     class="profile-pic" />
+                <!-- 飲食分析 (主項) -->
+                <div class="menu-item parent-item" onclick="toggleSubmenu(this)">
+                    <img src="~/Image/飲食分析icon.png" alt="">
+                    <span>飲食分析 ▾</span>
+                </div>
 
-                <div class="profile-tooltip">
-
-                    <p><strong>@Session["LoginUser"]</strong></p>
-                    <p><strong>@Session["RealName"]</strong></p>
-
-                    <a href="@Url.Action("MemberInfo", "Home", new { account = Session["LoginUser"] })">會員資料</a>
-                    <a href="@Url.Action("Logout", "Home")">登出</a>
+                <!-- 子選單 -->
+                <div class="submenu">
+                    <a href="@Url.Action("Analysis1Index", "Home")" class="submenu-item">
+                        <img src="~/Image/一周飲食統計icon.png" alt="">
+                        <span>一週飲食統計</span>
+                    </a>
+                    <a href="@Url.Action("Analysis2Index", "Home")" class="submenu-item">
+                        <img src="~/Image/每日熱量趨勢icon.png" alt="">
+                        <span>每日熱量趨勢</span>
+                    </a>
+                    <a href="@Url.Action("Analysis3Index", "Home")" class="submenu-item">
+                        <img src="~/Image/營養比例分析icon.png" alt="">
+                        <span>營養比例分析</span>
+                    </a>
                 </div>
             </div>
-        }
+        </div>
+    }
+
+    <!-- 主內容 -->
+    <div class="main-content">
+        @RenderBody()
     </div>
 
+    <h6>版權所有，抄襲必究</h6>
+
+    <!-- 右上角頭像 -->
+    @if (Session["LoginUser"] != null && Session["ImageName"] != null)
+    {
+        <div class="profile-container">
+            <img src="@Url.Content("~/Photo/" + Session["ImageName"])" alt="會員照片" class="profile-pic" />
+            <div class="profile-tooltip">
+                <p><strong>@Session["LoginUser"]</strong></p>
+                <p><strong>@Session["RealName"]</strong></p>
+                <a href="@Url.Action("MemberInfo", "Home", new { account = Session["LoginUser"] })">會員資料</a>
+                <a href="@Url.Action("Logout", "Home")">登出</a>
+            </div>
+        </div>
+    }
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById("sidebar").classList.toggle("open");
+        }
+
+        function toggleSubmenu(el) {
+            const submenu = el.nextElementSibling;
+            submenu.style.display = submenu.style.display === "flex" ? "none" : "flex";
+        }
+    </script>
 </body>
 </html>

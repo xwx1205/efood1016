@@ -29,6 +29,15 @@
         justify-content: center;
     }
 
+    .card-little {
+        background: #f0eeec;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
     /* Select2 選單與圖片樣式強化 */
     .select2-container--default .select2-selection--single {
         height: 50px;
@@ -65,6 +74,10 @@
     <img src="~/Image/飲食分析icon.png" alt="飲食分析icon" class="menu-icon">
     <h2 class="page-title"> 飲食分析</h2>
 </div>
+<div class="card-little">
+    <img src="~/Image/一周飲食統計icon.png" alt="icon" class="menu-icon">
+    <h2 class="page-title">一周飲食統計</h2>
+</div>
 
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -80,7 +93,7 @@
 <div style="display: flex; height: 70vh;">
     <!-- 左邊卡片 -->
     <div style="flex: 1; padding: 30px; display: flex; flex-direction: column; align-items: flex-start;">
-        <h2 style="margin: 0 0 20px 0;">一周飲食統計</h2>
+        @*<h2 style="margin: 0 0 20px 0;">一周飲食統計</h2>*@
         <div style="display: flex; justify-content: space-between; flex: 1; width: 100%; max-width: calc(50vw - 60px); gap: 20px;">
             <!-- 平均熱量卡片 -->
             <div style="flex: 1; border: 2px solid #ccc; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
