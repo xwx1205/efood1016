@@ -89,6 +89,42 @@
         margin-left: 10px;
         color: #666;
     }
+
+  
+    /* --- Select2 自訂顏色樣式 --- */
+    /* 主要選擇框的背景與邊框 */
+    .select2-container--default .select2-selection--single {
+        background-color: #fdfcfc; /* 選擇框背景色 */
+        border: 1px solid #bcaea8; /* 邊框顏色 */
+    }
+
+    /* 選擇框內的文字顏色 */
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #5c524e; /* 文字顏色 */
+    }
+
+    /* 右側小箭頭的顏色 */
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        border-color: #7c6e6e transparent transparent transparent; /* 箭頭顏色 */
+    }
+
+    /* 當滑鼠懸停在選擇框上時的邊框顏色 */
+    .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: #8e8480; /* 高亮邊框色 */
+    }
+
+    /* 下拉選單面板的背景與邊框 */
+    .select2-dropdown {
+        background-color: #fefefe;
+        border: 1px solid #bcaea8;
+    }
+
+    /* 當滑鼠懸停在選項上時的背景與文字顏色 */
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #8e8480; /* 懸停選項的背景色 (使用您的主題色) */
+        color: white; /* 懸停選項的文字顏色 */
+    }
+
 </style>
 
 <div class="card">
