@@ -1,5 +1,4 @@
-﻿<!-- 🔧 Select2 樣式 & jQuery -->
-<head>
+﻿<head>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -38,7 +37,6 @@
         justify-content: center;
     }
 
-    /* Select2 選單與圖片樣式強化 */
     .select2-container--default .select2-selection--single {
         height: 50px;
         display: flex;
@@ -48,7 +46,7 @@
     }
 
     .select2-container {
-        width: 450px !important; /* ✅ 統一整體寬度 */
+        width: 450px !important;
     }
 
     .select2-results__option img,
@@ -68,11 +66,86 @@
         font-size: 18px;
         padding-left: 10px;
     }
+
+    .week-nav-button {
+        padding: 8px 12px;
+        margin: 0 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f8f8f8;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+        .week-nav-button:hover {
+            background-color: #e0e0e0;
+        }
+
+    .week-range {
+        font-size: 16px;
+        margin-left: 10px;
+        color: #666;
+    }
+
+    .avg-calories-card {
+        flex: 1;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        min-height: 300px;
+        background-color: #fff;
+        text-align: center;
+    }
+
+    .meal-avg-container {
+        flex: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 300px;
+    }
+
+    .meal-avg-card {
+        flex: 1;
+        width: 100%;
+        max-width: 200px;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        background-color: #fff;
+        text-align: center;
+    }
+
+        .meal-avg-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+
+        .meal-avg-card span {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .meal-avg-card .unit {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 14px;
+            color: #666;
+        }
 </style>
 
 <div class="card">
     <img src="~/Image/飲食分析icon.png" alt="飲食分析icon" class="menu-icon">
-    <h2 class="page-title"> 飲食分析</h2>
+    <h2 class="page-title">飲食分析</h2>
 </div>
 <div class="card-little">
     <img src="~/Image/一周飲食統計icon.png" alt="icon" class="menu-icon">
@@ -86,37 +159,59 @@
     var weekData = ViewBag.WeekData as Dictionary<string, string>;
     var selectedDate = ViewBag.SelectedDate as string ?? DateTime.Now.ToString("yyyy-MM-dd");
     var averageCalories = ViewBag.AverageCalories as double? ?? 0;
-    var nutrients = ViewBag.Nutrients as dynamic;
+    var avgBreakfastCalories = ViewBag.AvgBreakfastCalories as double? ?? 0;
+    var avgLunchCalories = ViewBag.AvgLunchCalories as double? ?? 0;
+    var avgDinnerCalories = ViewBag.AvgDinnerCalories as double? ?? 0;
+    var startDate = DateTime.Parse(selectedDate).AddDays(-6).ToString("yyyy/MM/dd");
+    var endDate = DateTime.Parse(selectedDate).ToString("yyyy/MM/dd");
 }
 
 <!-- 主體畫面 -->
 <div style="display: flex; height: 70vh;">
     <!-- 左邊卡片 -->
     <div style="flex: 1; padding: 30px; display: flex; flex-direction: column; align-items: flex-start;">
-        @*<h2 style="margin: 0 0 20px 0;">一周飲食統計</h2>*@
-        <div style="display: flex; justify-content: space-between; flex: 1; width: 100%; max-width: calc(50vw - 60px); gap: 20px;">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; flex: 1; width: 100%; max-width: calc(50vw - 60px); gap: 20px;">
             <!-- 平均熱量卡片 -->
-            <div style="flex: 1; border: 2px solid #ccc; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+            <div class="avg-calories-card">
                 <h3 style="margin: 0 0 10px 0;">本週平均熱量</h3>
                 <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
                     <span style="font-size: 48px; font-weight: bold;">@averageCalories</span>
                 </div>
                 <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">kcal</div>
             </div>
-            <!-- 營養素卡片 -->
-            <div style="flex: 1; border: 2px solid #ccc; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
-                <h3 style="margin: 0 0 10px 0;">本週總營養素</h3>
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <span style="font-size: 48px; font-weight: bold;">0</span>
+            <!-- 本週每餐平均熱量 -->
+            <div class="meal-avg-container">
+                <!-- 早餐平均熱量 -->
+                <div class="meal-avg-card">
+                    <h4>早餐平均熱量</h4>
+                    <div>
+                        <span>@avgBreakfastCalories.ToString("0.0")</span>
+                    </div>
+                    <div class="unit">kcal</div>
                 </div>
-                <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">g</div>
+                <!-- 午餐平均熱量 -->
+                <div class="meal-avg-card">
+                    <h4>午餐平均熱量</h4>
+                    <div>
+                        <span>@avgLunchCalories.ToString("0.0")</span>
+                    </div>
+                    <div class="unit">kcal</div>
+                </div>
+                <!-- 晚餐平均熱量 -->
+                <div class="meal-avg-card">
+                    <h4>晚餐平均熱量</h4>
+                    <div>
+                        <span>@avgDinnerCalories.ToString("0.0")</span>
+                    </div>
+                    <div class="unit">kcal</div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- 右邊資料區 -->
     <div style="flex: 1; padding: 30px;">
-        <!-- ✅ 頁面跳轉選單 -->
+        <!-- 頁面跳轉選單 -->
         <div style="margin-bottom: 20px;">
             <select id="pageSelect" style="width: 450px;">
                 <option value="">--- 請選擇頁面 ---</option>
@@ -126,10 +221,13 @@
             </select>
         </div>
 
-        <!-- 日期選擇 -->
-        <div style="margin-bottom: 20px;">
+        <!-- 日期選擇與週切換 -->
+        <div style="margin-bottom: 20px; display: flex; align-items: center;">
+            <button id="prevWeek" class="week-nav-button">上一週</button>
             <label>選擇日期：</label>
-            <input type="date" id="analysisDate" value="@selectedDate" />
+            <input type="date" id="analysisDate" value="@selectedDate" style="margin: 0 10px;" />
+            <button id="nextWeek" class="week-nav-button">下一週</button>
+            <span class="week-range">@startDate - @endDate</span>
         </div>
 
         <!-- 七天記錄 -->
@@ -139,7 +237,7 @@
             {
                 foreach (var item in weekData)
                 {
-                    <li>@item.Key ：@item.Value</li>
+                    <li>@item.Key : @item.Value</li>
                 }
             }
             else
@@ -150,18 +248,18 @@
     </div>
 </div>
 
-<!-- ✅ Select2 初始化 -->
+<!-- Select2 初始化 -->
 <script>
     $(document).ready(function () {
         function formatOption(option) {
-            if (!option.id) return option.text; // 不處理 placeholder
+            if (!option.id) return option.text;
             var iconUrl = $(option.element).data('icon');
             if (!iconUrl) return option.text;
             return $('<span><img src="' + iconUrl + '" style="height:30px; width:30px; margin-right:10px;">' + option.text + '</span>');
         }
 
         $('#pageSelect').select2({
-            width: 'style', // ✅ 這行最重要，解決 placeholder 格子寬度問題
+            width: 'style',
             templateResult: formatOption,
             templateSelection: formatOption
         });
@@ -178,6 +276,21 @@
             if (newDate) {
                 window.location.href = '/Home/Analysis1Index?selectedDate=' + newDate;
             }
+        });
+
+        // 上一週/下一週按鈕
+        $('#prevWeek').on('click', function () {
+            var currentDate = new Date('@selectedDate');
+            currentDate.setDate(currentDate.getDate() - 7);
+            var newDate = currentDate.toISOString().split('T')[0];
+            window.location.href = '/Home/Analysis1Index?selectedDate=' + newDate;
+        });
+
+        $('#nextWeek').on('click', function () {
+            var currentDate = new Date('@selectedDate');
+            currentDate.setDate(currentDate.getDate() + 7);
+            var newDate = currentDate.toISOString().split('T')[0];
+            window.location.href = '/Home/Analysis1Index?selectedDate=' + newDate;
         });
     });
 </script>

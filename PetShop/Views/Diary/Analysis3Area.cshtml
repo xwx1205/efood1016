@@ -68,6 +68,27 @@
         font-size: 18px;
         box-sizing: border-box;
     }
+
+    /* 按鈕與日期範圍樣式 */
+    .week-nav-button {
+        padding: 8px 12px;
+        margin: 0 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f8f8f8;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+        .week-nav-button:hover {
+            background-color: #e0e0e0;
+        }
+
+    .week-range {
+        font-size: 16px;
+        margin-left: 10px;
+        color: #666;
+    }
 </style>
 
 <div class="card">
@@ -87,14 +108,16 @@
     var weekData = ViewBag.WeekData as Dictionary<string, string>;
     var selectedDate = ViewBag.SelectedDate as string ?? DateTime.Now.ToString("yyyy-MM-dd");
     var labels = ViewBag.Labels as string[];
-    var values = ViewBag.Values as int[];
+    var values = ViewBag.Values as decimal[];
+    // 計算當前週的起止日期
+    var startDate = DateTime.Parse(selectedDate).AddDays(-6).ToString("yyyy/MM/dd");
+    var endDate = DateTime.Parse(selectedDate).ToString("yyyy/MM/dd");
 }
 
 <!-- 主內容區：圓餅圖 + 七天資料 -->
 <div style="display: flex; height: 70vh;">
     <!-- 左半：圓餅圖 -->
     <div style="flex: 1; padding: 30px; display: flex; flex-direction: column; align-items: flex-start;">
-        @*<h2 style="margin: 0 0 20px 0;">營養比例分析</h2>*@
         <div style="display: flex; align-items: center; justify-content: center; flex: 1; width: 100%; max-width: calc(50vw - 60px);">
             <canvas id="myPieChart" style="max-width: 100%; max-height: 100%;"></canvas>
         </div>
@@ -102,7 +125,7 @@
 
     <!-- 右半：選單與七天紀錄 -->
     <div style="flex: 1; padding: 30px;">
-        <!-- ✅ 頁面跳轉選單 -->
+        <!-- 頁面跳轉選單 -->
         <div style="margin-bottom: 20px;">
             <select id="pageSelect" style="width: 450px;">
                 <option value="">--- 請選擇頁面 ---</option>
@@ -112,10 +135,13 @@
             </select>
         </div>
 
-        <!-- 日期選擇 -->
-        <div style="margin-bottom: 20px;">
+        <!-- 日期選擇與週切換 -->
+        <div style="margin-bottom: 20px; display: flex; align-items: center;">
+            <button id="prevWeek" class="week-nav-button">上一週</button>
             <label>選擇日期：</label>
-            <input type="date" id="analysisDate" value="@selectedDate" />
+            <input type="date" id="analysisDate" value="@selectedDate" style="margin: 0 10px;" />
+            <button id="nextWeek" class="week-nav-button">下一週</button>
+            <span class="week-range">@startDate - @endDate</span>
         </div>
 
         <!-- 七天紀錄 -->
@@ -141,7 +167,7 @@
 
 <script>
     $(document).ready(function () {
-        // ✅ Select2 圖片格式處理
+        // Select2 圖片格式處理
         function formatOption(option) {
             if (!option.id) return option.text;
             var iconUrl = $(option.element).data('icon');
@@ -161,12 +187,27 @@
             if (url) window.location.href = url;
         });
 
-        // 日期跳轉
+        // 日期選擇跳轉
         $('#analysisDate').on('change', function () {
             var newDate = $(this).val();
             if (newDate) {
                 window.location.href = '/Home/Analysis3Index?selectedDate=' + newDate;
             }
+        });
+
+        // 上一週/下一週按鈕
+        $('#prevWeek').on('click', function () {
+            var currentDate = new Date('@selectedDate');
+            currentDate.setDate(currentDate.getDate() - 7);
+            var newDate = currentDate.toISOString().split('T')[0];
+            window.location.href = '/Home/Analysis3Index?selectedDate=' + newDate;
+        });
+
+        $('#nextWeek').on('click', function () {
+            var currentDate = new Date('@selectedDate');
+            currentDate.setDate(currentDate.getDate() + 7);
+            var newDate = currentDate.toISOString().split('T')[0];
+            window.location.href = '/Home/Analysis3Index?selectedDate=' + newDate;
         });
 
         // 圓餅圖資料與繪製

@@ -1008,23 +1008,32 @@ namespace PetShop.Controllers
             ViewBag.Account = account;
 
             // 設定近七天日期和數據
-            DateTime startDate = string.IsNullOrEmpty(selectedDate) ? DateTime.Today : DateTime.Parse(selectedDate);
+            DateTime endDate = string.IsNullOrEmpty(selectedDate) ? DateTime.Today : DateTime.Parse(selectedDate);
+            DateTime startDate = endDate.AddDays(-6);
             Dictionary<string, string> weekData = new Dictionary<string, string>();
             double totalCalories = 0;
             int daysWithData = 0;
+            Dictionary<string, (double TotalCalories, int Count)> mealTypeData = new Dictionary<string, (double, int)>
+            {
+                { "早餐", (0, 0) },
+                { "午餐", (0, 0) },
+                { "晚餐", (0, 0) }
+            };
 
             try
             {
                 X.Open();
                 for (int i = 0; i < 7; i++)
                 {
-                    DateTime currentDate = startDate.AddDays(-6 + i);
+                    DateTime currentDate = startDate.AddDays(i);
+                    string dateKey = currentDate.ToString("yyyy-MM-dd");
+                    weekData[dateKey] = "無記錄";
 
                     // 查詢當日餐點記錄並計算熱量
                     string sql = @"
-                SELECT d.Food, d.Calories 
-                FROM Diary d 
-                WHERE d.Account = @Account AND CONVERT(date, d.CreateTime) = @Date";
+                        SELECT d.Food, d.Calories, d.MealType 
+                        FROM Diary d 
+                        WHERE d.Account = @Account AND CONVERT(date, d.CreateTime) = @Date";
                     SqlCommand cmd = new SqlCommand(sql, X);
                     cmd.Parameters.AddWithValue("@Account", account);
                     cmd.Parameters.AddWithValue("@Date", currentDate.Date);
@@ -1036,13 +1045,25 @@ namespace PetShop.Controllers
                     {
                         hasData = true;
                         string food = reader["Food"]?.ToString() ?? "未知餐點";
-                        int calories = reader["Calories"] != DBNull.Value ? Convert.ToInt32(reader["Calories"]) : 0;
+                        double calories = reader["Calories"] != DBNull.Value ? Convert.ToDouble(reader["Calories"]) : 0;
+                        string mealType = reader["MealType"]?.ToString();
+
                         mealDetails += $"{food} ({calories} kcal), ";
                         totalCalories += calories;
+
+                        // 累計每餐類別的熱量和記錄數
+                        if (mealTypeData.ContainsKey(mealType))
+                        {
+                            var (total, count) = mealTypeData[mealType];
+                            mealTypeData[mealType] = (total + calories, count + 1);
+                        }
                     }
                     reader.Close();
-                    if (hasData) daysWithData++;
-                    weekData[currentDate.ToString("yyyy-MM-dd")] = string.IsNullOrEmpty(mealDetails) ? "無記錄" : mealDetails.TrimEnd(',', ' ');
+                    if (hasData)
+                    {
+                        daysWithData++;
+                        weekData[dateKey] = mealDetails.TrimEnd(',', ' ');
+                    }
                 }
             }
             catch (Exception ex)
@@ -1056,12 +1077,17 @@ namespace PetShop.Controllers
 
             // 計算平均熱量
             double averageCalories = daysWithData > 0 ? Math.Round(totalCalories / daysWithData, 1) : 0;
+            double avgBreakfastCalories = mealTypeData["早餐"].Count > 0 ? Math.Round(mealTypeData["早餐"].TotalCalories / mealTypeData["早餐"].Count, 1) : 0;
+            double avgLunchCalories = mealTypeData["午餐"].Count > 0 ? Math.Round(mealTypeData["午餐"].TotalCalories / mealTypeData["午餐"].Count, 1) : 0;
+            double avgDinnerCalories = mealTypeData["晚餐"].Count > 0 ? Math.Round(mealTypeData["晚餐"].TotalCalories / mealTypeData["晚餐"].Count, 1) : 0;
 
-            // 設定數據，營養素預設為 0
+            // 設定 ViewBag 數據
             ViewBag.AverageCalories = averageCalories;
-            ViewBag.Nutrients = new { Carbs = 0.0, Fat = 0.0, Protein = 0.0 };
+            ViewBag.AvgBreakfastCalories = avgBreakfastCalories;
+            ViewBag.AvgLunchCalories = avgLunchCalories;
+            ViewBag.AvgDinnerCalories = avgDinnerCalories;
             ViewBag.WeekData = weekData;
-            ViewBag.SelectedDate = startDate.ToString("yyyy-MM-dd");
+            ViewBag.SelectedDate = endDate.ToString("yyyy-MM-dd");
 
             return View("~/Views/Diary/Analysis1Area.cshtml");
         }
@@ -1126,15 +1152,68 @@ namespace PetShop.Controllers
 
             return View("~/Views/Diary/Analysis2Area.cshtml");
         }
-        public ActionResult Analysis3Index()
-        {
-            ViewBag.Labels = new string[] { "碳水", "脂肪", "蛋白質" };
-            ViewBag.Values = new int[] { 10, 20, 30 };
+        public ActionResult Analysis3Index(string selectedDate)
+{
+    string account = Session["LoginUser"]?.ToString();
+    ViewBag.Account = account;
 
-            string account = Session["LoginUser"]?.ToString();
-            ViewBag.Account = account;
-            return View("~/Views/Diary/Analysis3Area.cshtml");
+    // 設定近七天日期和營養比例數據
+    DateTime startDate = string.IsNullOrEmpty(selectedDate) ? DateTime.Today : DateTime.Parse(selectedDate);
+    Dictionary<string, string> weekData = new Dictionary<string, string>();
+    decimal totalCarbs = 0, totalFat = 0, totalProtein = 0;
+
+    try
+    {
+        X.Open();
+        for (int i = 0; i < 7; i++)
+        {
+            DateTime currentDate = startDate.AddDays(-6 + i);
+
+            // 查詢當日餐點記錄並計算營養總和
+            string sql = @"
+                SELECT d.Food, d.Calories, d.Carbs, d.Fat, d.Protein 
+                FROM Diary d 
+                WHERE d.Account = @Account AND CONVERT(date, d.CreateTime) = @Date";
+            SqlCommand cmd = new SqlCommand(sql, X);
+            cmd.Parameters.AddWithValue("@Account", account);
+            cmd.Parameters.AddWithValue("@Date", currentDate.Date);
+            SqlDataReader reader = cmd.ExecuteReader();
+
+            string mealDetails = "";
+            while (reader.Read())
+            {
+                string food = reader["Food"]?.ToString() ?? "未知餐點";
+                int calories = reader["Calories"] != DBNull.Value ? Convert.ToInt32(reader["Calories"]) : 0;
+                decimal carbs = reader["Carbs"] != DBNull.Value ? Convert.ToDecimal(reader["Carbs"]) : 0;
+                decimal fat = reader["Fat"] != DBNull.Value ? Convert.ToDecimal(reader["Fat"]) : 0;
+                decimal protein = reader["Protein"] != DBNull.Value ? Convert.ToDecimal(reader["Protein"]) : 0;
+
+                mealDetails += $"{food} ({calories} kcal), ";
+                totalCarbs += carbs;
+                totalFat += fat;
+                totalProtein += protein;
+            }
+            reader.Close();
+            weekData[currentDate.ToString("yyyy-MM-dd")] = string.IsNullOrEmpty(mealDetails) ? "無記錄" : mealDetails.TrimEnd(',', ' ');
         }
+    }
+    catch (Exception ex)
+    {
+        ViewBag.Error = "無法載入數據：" + ex.Message;
+    }
+    finally
+    {
+        X.Close();
+    }
+
+    // 設定圓餅圖數據
+    ViewBag.Labels = new string[] { "碳水化合物", "脂肪", "蛋白質" };
+    ViewBag.Values = new decimal[] { totalCarbs, totalFat, totalProtein };
+    ViewBag.WeekData = weekData;
+    ViewBag.SelectedDate = startDate.ToString("yyyy-MM-dd");
+
+    return View("~/Views/Diary/Analysis3Area.cshtml");
+}
 
         public ActionResult MealIndex(string date)
         {
