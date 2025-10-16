@@ -8,13 +8,14 @@ using System.IO;
 using System.Linq;
 using System.Security.Policy;
 using System.Web.Mvc;
+using System.Web.Services.Description;
 using System.Web.UI.WebControls;
 
 namespace PetShop.Controllers
 {
     public class HomeController : Controller
     {
-        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\Vivobook_15\source\repos\efood1015\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
+        public SqlConnection X = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\efood\PetShop\App_Data\FoodDB.mdf;Integrated Security=True");
         public MyDbContext db = new MyDbContext();
         public string Result2 { get; set; }
         //修改會員資料
@@ -586,22 +587,6 @@ namespace PetShop.Controllers
             finally { X.Close(); }
             return RedirectToAction("DiaryIndex");
         }
-        //public JsonResult DeleteDiary(int id)
-        //{
-        //    Debug.WriteLine(id);
-        //    bool success = false;
-        //    try
-        //    {
-        //        X.Open();
-        //        string sql = "DELETE FROM Diary WHERE Id=@Id";
-        //        SqlCommand cmd = new SqlCommand(sql, X);
-        //        cmd.Parameters.AddWithValue("@Id", id);
-        //        success = cmd.ExecuteNonQuery() > 0;
-        //    }
-        //    finally { X.Close(); }
-        //    return Json(new { success });
-
-        //}
         [HttpPost]
         public JsonResult DeleteDiary(int id)
         {
@@ -626,7 +611,6 @@ namespace PetShop.Controllers
             }
             return Json(new { success, message });
         }
-
         [HttpPost]
         public JsonResult Check(int count)
         {
@@ -796,7 +780,7 @@ namespace PetShop.Controllers
         }
 
         [HttpPost]
-        public JsonResult SaveObjective(string account, int targetDays, float targetWeight)
+        public JsonResult SaveObjective(string account, int targetDays, float targetWeight, decimal dailyCalories)
         {
             if (string.IsNullOrEmpty(account))
             {
@@ -810,21 +794,66 @@ namespace PetShop.Controllers
             {
                 return Json(new { success = false, message = "目標體重必須大於0" });
             }
+            if (dailyCalories <= 0)
+            {
+                return Json(new { success = false, message = "每日所需熱量必須大於0" });
+            }
 
+            float currentWeight = 0;
+            string goalStatus = "維持";
             try
             {
                 X.Open();
-                string sql = @"IF EXISTS (SELECT 1 FROM Objectives WHERE Account = @Account)
-                       UPDATE Objectives SET TargetDays = @TargetDays, TargetWeight = @TargetWeight, CreatedAt = GETDATE() WHERE Account = @Account
-                       ELSE
-                       INSERT INTO Objectives (Account, TargetDays, TargetWeight) VALUES (@Account, @TargetDays, @TargetWeight)";
+                // 取得會員身高、生日、目前體重
+                string sql = "SELECT Height, BirthDay, Weight FROM [Member] WHERE Account = @Account";
                 SqlCommand cmd = new SqlCommand(sql, X);
                 cmd.Parameters.AddWithValue("@Account", account);
-                cmd.Parameters.AddWithValue("@TargetDays", targetDays);
-                cmd.Parameters.AddWithValue("@TargetWeight", targetWeight);
-                cmd.ExecuteNonQuery();
+                SqlDataReader reader = cmd.ExecuteReader();
+                float height = 0;
+                int age = 30;
+                if (reader.Read())
+                {
+                    height = reader["Height"] != DBNull.Value ? Convert.ToSingle(reader["Height"]) : 0;
+                    currentWeight = reader["Weight"] != DBNull.Value ? Convert.ToSingle(reader["Weight"]) : 0;
+                    string birthDayStr = reader["BirthDay"]?.ToString();
+                    DateTime birthDay;
+                    if (!string.IsNullOrEmpty(birthDayStr) && birthDayStr.Length == 8)
+                    {
+                        if (DateTime.TryParseExact(birthDayStr, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out birthDay))
+                        {
+                            age = DateTime.Now.Year - birthDay.Year;
+                            if (DateTime.Now < birthDay.AddYears(age)) age--;
+                        }
+                    }
+                }
+                reader.Close();
 
-                return Json(new { success = true });
+                // 儲存或更新目標
+                string objSql = @"IF EXISTS (SELECT 1 FROM Objectives WHERE Account = @Account)
+                       UPDATE Objectives SET TargetDays = @TargetDays, TargetWeight = @TargetWeight, DailyCalories = @DailyCalories, CreatedAt = GETDATE() WHERE Account = @Account
+                       ELSE
+                       INSERT INTO Objectives (Account, TargetDays, TargetWeight, DailyCalories) VALUES (@Account, @TargetDays, @TargetWeight, @DailyCalories)";
+                SqlCommand objCmd = new SqlCommand(objSql, X);
+                objCmd.Parameters.AddWithValue("@Account", account);
+                objCmd.Parameters.AddWithValue("@TargetDays", targetDays);
+                objCmd.Parameters.AddWithValue("@TargetWeight", targetWeight);
+                objCmd.Parameters.AddWithValue("@DailyCalories", dailyCalories);
+                objCmd.ExecuteNonQuery();
+
+                // 重新計算每日所需熱量
+                double newBmr = 10 * targetWeight + 6.25 * height - 5 * age + 5;
+                double newDailyCalories = Math.Round(newBmr * 1.55, 0);
+
+                // 判斷目標狀態
+                float diff = targetWeight - currentWeight;
+                if (diff > 0)
+                    goalStatus = "目標:增重";
+                else if (diff < 0)
+                    goalStatus = "目標:減重";
+                else
+                    goalStatus = "目標:維持";
+
+                return Json(new { success = true, message = "儲存成功", dailyCalories = newDailyCalories, goalStatus = goalStatus }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -875,6 +904,101 @@ namespace PetShop.Controllers
                 }
             }
 
+            // 取得當日飲食加總熱量
+            decimal totalCalories = 0;
+            try
+            {
+                X.Open();
+                string sql = @"SELECT SUM(Calories) FROM Diary 
+                       WHERE Account = @Account AND CONVERT(date, CreateTime) = @Today";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Account", account);
+                cmd.Parameters.AddWithValue("@Today", DateTime.Today);
+                object result = cmd.ExecuteScalar();
+                if (result != DBNull.Value && result != null)
+                    totalCalories = Convert.ToDecimal(result);
+            }
+            finally
+            {
+                X.Close();
+            }
+
+            //取得每日所需熱量
+            decimal dailyCalories = 0;
+            float targetWeight = 0;
+            int targetDays = 0;
+            try
+            {
+                X.Open();
+                string sql = "SELECT DailyCalories, TargetWeight, TargetDays FROM Objectives WHERE Account = @Account";
+                SqlCommand cmd = new SqlCommand(sql, X);
+                cmd.Parameters.AddWithValue("@Account", account);
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    dailyCalories = reader["DailyCalories"] != DBNull.Value ? Convert.ToDecimal(reader["DailyCalories"]) : 0;
+                    targetWeight = reader["TargetWeight"] != DBNull.Value ? Convert.ToSingle(reader["TargetWeight"]) : 0;
+                    targetDays = reader["TargetDays"] != DBNull.Value ? Convert.ToInt32(reader["TargetDays"]) : 0;
+                }
+                reader.Close();
+            }
+            finally
+            {
+                X.Close();
+            }
+
+            // 計算熱量差距並推薦食物
+            decimal calorieDiff = (decimal)dailyCalories - totalCalories;
+            List<CommonFood> recommendFoods = new List<CommonFood>();
+            try
+            {
+                X.Open();
+                if (calorieDiff > 0)
+                {
+                    // 推薦熱量小於等於差距的食物（補充）
+                    string sql = @"SELECT TOP 3 * FROM CommonFoods WHERE Calories <= @Diff ORDER BY Calories DESC";
+                    SqlCommand cmd = new SqlCommand(sql, X);
+                    cmd.Parameters.AddWithValue("@Diff", calorieDiff);
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        recommendFoods.Add(new CommonFood
+                        {
+                            Name = reader["Name"].ToString(),
+                            Calories = reader["Calories"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Calories"]) : null
+                            // 可加上蛋白質、脂肪、碳水等
+                        });
+                    }
+                    reader.Close();
+                }
+                else if (calorieDiff < 0)
+                {
+                    // 推薦高熱量食物（減少攝取）
+                    string sql = @"SELECT TOP 3 * FROM CommonFoods WHERE Calories >= @HighCal ORDER BY Calories DESC";
+                    SqlCommand cmd = new SqlCommand(sql, X);
+                    cmd.Parameters.AddWithValue("@HighCal", Math.Abs(calorieDiff));
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        recommendFoods.Add(new CommonFood
+                        {
+                            Name = reader["Name"].ToString(),
+                            Calories = reader["Calories"] != DBNull.Value ? (decimal?)Convert.ToDecimal(reader["Calories"]) : null
+                        });
+                    }
+                    reader.Close();
+                }
+            }
+            finally
+            {
+                X.Close();
+            }
+            ViewBag.TargetDays = targetDays;
+            ViewBag.TargetWeight = targetWeight;
+            ViewBag.DailyCalories = dailyCalories;
+            ViewBag.RecommendFoods = recommendFoods;
+            ViewBag.CalorieDiff = calorieDiff;
+            ViewBag.TodayCalories = totalCalories;
             ViewBag.Member = member;
             return View("~/Views/Diary/ObjectiveArea.cshtml");
         }

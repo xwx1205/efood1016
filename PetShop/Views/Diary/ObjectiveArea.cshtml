@@ -1,5 +1,6 @@
 ﻿@{
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var recommendFoods = ViewBag.RecommendFoods as List<PetShop.Models.CommonFood>;
     //ViewBag.Title = "目標設定";
 
     // 從 ViewBag 取得會員資料（由 HomeController 傳入）
@@ -41,6 +42,7 @@
         text-align: left; /* 水平靠左 */
         margin-left: 10px; /* 可選，與 page-wrapper 左側對齊 */
     }
+
     .menu-icon {
         width: 65px; /* 可依需求調整 */
         height: 65px;
@@ -48,6 +50,7 @@
         text-align: left;
         justify-content: flex-start
     }
+
     .card {
         background: #f0eeec;
         border-radius: 12px;
@@ -101,14 +104,15 @@
             <div style="display: flex; flex-direction: column; gap: 15px;">
                 <div>
                     <label style="font-size: 18px; margin-right: 10px;">目標時間（天）:</label>
-                    <input type="number" id="targetDays" name="targetDays" value="30" min="1" style="font-size: 16px; padding: 5px; width: 100px;" />
+                    <input type="number" id="targetDays" name="targetDays" value="@ViewBag.TargetDays" min="7" style="font-size: 16px; padding: 5px; width: 100px;" />
                 </div>
                 <div>
                     <label style="font-size: 18px; margin-right: 10px;">目標體重（kg）:</label>
-                    <input type="number" id="targetWeight" name="targetWeight" value="@member.RegisterWeight" step="0.1" min="0" style="font-size: 16px; padding: 5px; width: 100px;" />
+                    <input type="number" id="targetWeight" name="targetWeight" value="@ViewBag.TargetWeight" step="0.1" min="0" style="font-size: 16px; padding: 5px; width: 100px;" />
                 </div>
                 <div>
                     <button id="updateGoal" style="font-size: 16px; padding: 8px 16px; background-color: #466954; color: white; border: none; border-radius: 5px; cursor: pointer;">更新目標</button>
+                    <span id="goalStatus"></span>
                 </div>
             </div>
         </div>
@@ -116,12 +120,63 @@
         <div style="width: 100%; border: 2px solid #ccc; border-radius: 10px; padding: 20px; position: relative; height: calc(40% - 20px); background-color: #fff;">
             <h3 style="margin: 0 0 10px 0; font-size: 20px;">每日所需熱量</h3>
             <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 48px; font-weight: bold;">@dailyCalories</span>
+                <span id="dailyCaloriesValue" style="font-size: 48px; font-weight: bold;">@ViewBag.DailyCalories</span>
+                <input type="hidden" id="dailyCaloriesInput" name="dailyCalories" value="@dailyCalories" />
             </div>
             <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">kcal</div>
         </div>
     </div>
-    <div style="width: 20%;"></div>
+
+    <!-- 中間間隔 -->
+    <div style="width: 8%;"></div>
+
+    <div style="width: 20%;">
+        <!-- 每日飲食熱量方框 -->
+        <div style="width: 100%; border: 2px solid #ccc; border-radius: 10px; padding: 20px; position: relative; height: calc(30% - 20px); background-color: #fff;">
+            <h3 style="margin: 0 0 10px 0; font-size: 20px;">今日飲食總熱量</h3>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 48px; font-weight: bold;">@ViewBag.TodayCalories</span>
+            </div>
+            <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">kcal</div>
+        </div>
+        <!-- 熱量差距方框 -->
+        <div style="width: 100%; border: 2px solid #ccc; border-radius: 10px; padding: 20px; position: relative; height: calc(30% - 20px); background-color: #fff;">
+            <h3 style="margin: 0 0 10px 0; font-size: 20px;">熱量差距</h3>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 48px; font-weight: bold;">@ViewBag.CalorieDiff</span>
+            </div>
+            <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">kcal</div>
+        </div>
+
+        <!-- 推薦食物清單 -->
+        <div style="width: 100%; border: 2px solid #ccc; border-radius: 10px; padding: 20px; position: relative; height: calc(40% - 20px); background-color: #fff;">
+            @if (recommendFoods != null && recommendFoods.Count > 0)
+            {
+                <div>
+                    @if (ViewBag.CalorieDiff > 0)
+                    {
+                        <h3 style="margin: 0 0 10px 0; font-size: 20px;">建議補充以下食物：</h3>
+                    }
+                    else
+                    {
+                        <h3 style="margin: 0 0 10px 0; font-size: 20px;">建議減少以下食物：</h3>
+                    }
+                    <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                        <ul style="list-style-type: disc; padding-left: 20px; text-align: left;">
+                            @foreach (var food in recommendFoods)
+                            {
+                                <li style="font-size: 18px; margin-bottom: 8px;">@food.Name (@food.Calories kcal)</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div style="text-align: center; color: #888; font-size: 16px;">無推薦食物</div>
+            }
+        </div>
+    </div>
 </div>
 
 <!-- JavaScript（處理更新目標按鈕） -->
@@ -150,11 +205,16 @@
                 data: {
                     account: account,
                     targetDays: targetDays,
-                    targetWeight: targetWeight
+                    targetWeight: targetWeight,
+                    dailyCalories: $('#dailyCaloriesInput').val()
                 },
                 success: function (response) {
                     if (response.success) {
                         alert('目標更新成功！');
+                        // 更新每日所需熱量顯示
+                        $('#dailyCaloriesValue').text(response.dailyCalories);
+                        $('#dailyCaloriesInput').val(response.dailyCalories);
+                        $('#goalStatus').text(response.goalStatus);
                     } else {
                         alert('目標更新失敗：' + response.message);
                     }
@@ -165,4 +225,5 @@
             });
         });
     });
+
 </script>
