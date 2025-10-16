@@ -14,25 +14,47 @@
             background: linear-gradient(to right, #f9f9f9, #e9eff5);
         }
 
-        header {
-            font-size: 2.5rem;
-            color: #7c6e6e;
-            padding: 20px 0;
+        /* ===== 固定導覽列 ===== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: linear-gradient(to right, #f9f9f9, #e9eff5);
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: space-between;
+            //padding: 0 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        /* ☰ 按鈕 */
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #444;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        /* 標題 */
+        header {
+            font-size: 2rem;
+            color: #7c6e6e;
             font-weight: 700;
             letter-spacing: 2px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            margin: 0;
         }
 
-        /* 頂部連結 */
+        /* 右上連結 */
         .top-links {
             display: flex;
-            justify-content: flex-end;
             gap: 20px;
-            width: 100%;
-            padding-right: 30px;
+            align-items: center;
         }
 
             .top-links a {
@@ -47,6 +69,12 @@
                     color: #8e8480;
                     text-decoration: underline;
                 }
+
+        /* 主內容要往下推，避免被導覽列蓋住 */
+        .main-content {
+            margin-top: 90px;
+            padding: 20px;
+        }
 
         /* 頁尾 */
         h6 {
@@ -80,20 +108,6 @@
                 transform: translateX(0);
             }
 
-        /* ☰ 按鈕 */
-        .toggle-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: none;
-            border: none;
-            color: #444;
-            font-size: 28px;
-            cursor: pointer;
-            z-index: 1000;
-        }
-
-        /* 選單內容 */
         .menu {
             margin-top: 80px;
             display: flex;
@@ -149,17 +163,12 @@
             cursor: pointer;
         }
 
-        /* 主內容區 */
-        .main-content {
-            padding: 20px;
-        }
-
         /* 頭像 + tooltip */
         .profile-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 999;
+            position: fixed;
+            top: 15px;
+            right: 100px;
+            z-index: 1001;
         }
 
         .profile-pic {
@@ -173,7 +182,7 @@
         .profile-tooltip {
             display: none;
             position: absolute;
-            top: 30px;
+            top: 50px;
             right: 0;
             background: white;
             border: 1px solid #ccc;
@@ -200,29 +209,39 @@
                 text-decoration: underline;
             }
     </style>
+    <style>
+        body {
+            background: linear-gradient(rgba(249,249,249,0.7), rgba(233,239,245,0.7)), url('/Image/food2.png') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+        }
+    </style>
 </head>
 
 <body>
-    <header>E-食代</header>
+    <!-- 固定導覽列 -->
+    <div class="navbar">
+        <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
 
-    <div class="top-links">
-        @if (Session["LoginUser"] == null)
-        {
-            @Html.ActionLink("登入/註冊", "LeaveHome", null, new { @class = "nav-link" })
-        }
-        else
-        {
-            @Html.ActionLink("登出", "Logout", null, new { @class = "nav-link" })
-        }
+        <header>E-食代</header>
 
-        @Html.ActionLink("回首頁", "Index", null, new { @class = "nav-link" })
+        <div class="top-links">
+            @if (Session["LoginUser"] == null)
+            {
+                @Html.ActionLink("登入/註冊", "LeaveHome", null, new { @class = "nav-link" })
+            }
+            else
+            {
+                @Html.ActionLink("登出", "Logout", null, new { @class = "nav-link" })
+            }
+
+            @Html.ActionLink("回首頁", "Index", null, new { @class = "nav-link" })
+        </div>
     </div>
 
     @if (Session["LoginUser"] != null)
     {
-        <!-- ☰ 按鈕 -->
-        <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-
         <!-- 側邊欄 -->
         <div id="sidebar">
             <div class="menu">
@@ -235,13 +254,11 @@
                     <span>目標設定</span>
                 </a>
 
-                <!-- 飲食分析 (主項) -->
                 <div class="menu-item parent-item" onclick="toggleSubmenu(this)">
                     <img src="~/Image/飲食分析icon.png" alt="">
                     <span>飲食分析 ▾</span>
                 </div>
 
-                <!-- 子選單 -->
                 <div class="submenu">
                     <a href="@Url.Action("Analysis1Index", "Home")" class="submenu-item">
                         <img src="~/Image/一周飲食統計icon.png" alt="">
@@ -267,7 +284,6 @@
 
     <h6>版權所有，抄襲必究</h6>
 
-    <!-- 右上角頭像 -->
     @if (Session["LoginUser"] != null && Session["ImageName"] != null)
     {
         <div class="profile-container">
